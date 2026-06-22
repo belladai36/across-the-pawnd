@@ -149,8 +149,8 @@ let sharedState = {
   journey: { completed: [], notes: {}, startedOn: "" },
   bottles: [],
   profiles: {
-    girl: { name: "Mochi", configured: false, city: "St. Louis", country: "United States", latitude: 38.627, longitude: -90.1994, timezone: "America/Chicago" },
-    boy: { name: "Biscuit", configured: false, city: "Beijing", country: "China", latitude: 39.9042, longitude: 116.4074, timezone: "Asia/Shanghai" },
+    girl: { name: "Mochi", gender: "unspecified", configured: false, city: "St. Louis", country: "United States", latitude: 38.627, longitude: -90.1994, timezone: "America/Chicago" },
+    boy: { name: "Biscuit", gender: "unspecified", configured: false, city: "Beijing", country: "China", latitude: 39.9042, longitude: 116.4074, timezone: "Asia/Shanghai" },
   },
   economy: { hearts: 0 },
   room: { inventory: [], placed: {} },
@@ -302,13 +302,21 @@ function renderAll() {
 }
 
 function renderIdentity() {
-  const labels = {
-    girl: ["♀", sharedState.profiles.girl.name],
-    boy: ["♂", sharedState.profiles.boy.name],
-  };
-  const choice = labels[identity] || ["♡", "Who are you?"];
+  const profile = identity ? sharedState.profiles[identity] : null;
+  const choice = profile
+    ? [genderSymbol(profile.gender), profile.name]
+    : ["♡", "Who are you?"];
   $("#identityIcon").textContent = choice[0];
   $("#identityName").textContent = choice[1];
+}
+
+function genderSymbol(gender) {
+  return {
+    female: "♀",
+    male: "♂",
+    nonbinary: "⚥",
+    unspecified: "♡",
+  }[gender] || "♡";
 }
 
 function renderTask() {
@@ -488,8 +496,12 @@ function renderStars() {
 function renderProfiles() {
   const girl = sharedState.profiles.girl;
   const boy = sharedState.profiles.boy;
-  $("#girlDogName").textContent = girl.configured ? girl.name : "Left pup";
-  $("#boyDogName").textContent = boy.configured ? boy.name : "Right pup";
+  $("#girlDogName").textContent = girl.configured
+    ? `${genderSymbol(girl.gender)} ${girl.name}`
+    : "Left pup";
+  $("#boyDogName").textContent = boy.configured
+    ? `${genderSymbol(boy.gender)} ${boy.name}`
+    : "Right pup";
   $("#girlPlace").textContent = girl.configured
     ? `${girl.city.toUpperCase()} · ${girl.name.toUpperCase()}'S SHORE`
     : "LEFT SHORE · WAITING FOR A PUP";
@@ -497,10 +509,10 @@ function renderProfiles() {
     ? `${boy.city.toUpperCase()} · ${boy.name.toUpperCase()}'S SHORE`
     : "RIGHT SHORE · WAITING FOR A PUP";
   $("#girlIdentityCity").textContent = girl.configured
-    ? `${girl.name} · ${[girl.city, girl.country].filter(Boolean).join(", ")}`
+    ? `${genderSymbol(girl.gender)} ${girl.name} · ${[girl.city, girl.country].filter(Boolean).join(", ")}`
     : "Not set up yet";
   $("#boyIdentityCity").textContent = boy.configured
-    ? `${boy.name} · ${[boy.city, boy.country].filter(Boolean).join(", ")}`
+    ? `${genderSymbol(boy.gender)} ${boy.name} · ${[boy.city, boy.country].filter(Boolean).join(", ")}`
     : "Not set up yet";
   $$(".identity-choices [data-identity]").forEach((button) => {
     const person = button.dataset.identity;
@@ -517,6 +529,7 @@ function renderProfiles() {
   if (identity) {
     const profile = sharedState.profiles[identity];
     $("#profileNameInput").value = profile.name;
+    $("#profileGenderInput").value = profile.gender || "unspecified";
     $("#profileCityInput").value = profile.city;
     $("#profileRegionInput").value = profile.country || "";
   }
@@ -791,6 +804,7 @@ function openIdentitySetup() {
   });
   const profile = pendingIdentity ? sharedState.profiles[pendingIdentity] : null;
   $("#identityProfileName").value = profile?.configured ? profile.name : "";
+  $("#identityProfileGender").value = profile?.gender || "unspecified";
   $("#identityProfileCity").value = profile?.configured ? profile.city : "";
   $("#identityProfileRegion").value = profile?.configured ? profile.country || "" : "";
   $("#identityManualTimeBox").hidden = true;
@@ -807,6 +821,7 @@ $(".identity-choices").addEventListener("click", (event) => {
   });
   const profile = sharedState.profiles[pendingIdentity];
   $("#identityProfileName").value = profile.configured ? profile.name : "";
+  $("#identityProfileGender").value = profile.gender || "unspecified";
   $("#identityProfileCity").value = profile.configured ? profile.city : "";
   $("#identityProfileRegion").value = profile.configured ? profile.country || "" : "";
 });
@@ -821,6 +836,7 @@ $("#identitySetupForm").addEventListener("submit", async (event) => {
   }
   if (!pendingIdentity) return showToast("Choose your shore first.");
   const name = $("#identityProfileName").value.trim();
+  const gender = $("#identityProfileGender").value;
   const city = $("#identityProfileCity").value.trim();
   const region = $("#identityProfileRegion").value.trim();
   if (!name || !city || !region) return showToast("Enter your name, city, and country or region.");
@@ -831,6 +847,7 @@ $("#identitySetupForm").addEventListener("submit", async (event) => {
       person: pendingIdentity,
       claimToken: identityClaimToken(pendingIdentity),
       name,
+      gender,
       city: location.city,
       country: location.country,
       ...location.time,
@@ -1043,6 +1060,7 @@ $("#lakeBottles").addEventListener("click", (event) => {
 $("#saveProfile").addEventListener("click", async () => {
   if (!identity) return openIdentitySetup();
   const name = $("#profileNameInput").value.trim();
+  const gender = $("#profileGenderInput").value;
   const city = $("#profileCityInput").value.trim();
   const region = $("#profileRegionInput").value.trim();
   if (!name || !city) return showToast("Give your pup a name and city first.");
@@ -1061,6 +1079,7 @@ $("#saveProfile").addEventListener("click", async () => {
       person: identity,
       claimToken: identityClaimToken(),
       name,
+      gender,
       city: match.name,
       country: match.country || "",
       latitude: match.latitude,
@@ -1083,6 +1102,7 @@ $("#saveProfile").addEventListener("click", async () => {
 $("#saveManualTime").addEventListener("click", async () => {
   if (!identity) return openIdentitySetup();
   const name = $("#profileNameInput").value.trim();
+  const gender = $("#profileGenderInput").value;
   const city = $("#profileCityInput").value.trim();
   const region = $("#profileRegionInput").value.trim();
   const manualLocalIso = $("#manualLocalTime").value;
@@ -1093,6 +1113,7 @@ $("#saveManualTime").addEventListener("click", async () => {
       person: identity,
       claimToken: identityClaimToken(),
       name,
+      gender,
       city,
       country: region,
       timeMode: "manual",

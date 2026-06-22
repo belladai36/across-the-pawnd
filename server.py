@@ -32,6 +32,7 @@ DEFAULT_STATE = {
     "profiles": {
         "girl": {
             "name": "Mochi",
+            "gender": "unspecified",
             "configured": False,
             "city": "St. Louis",
             "country": "United States",
@@ -45,6 +46,7 @@ DEFAULT_STATE = {
         },
         "boy": {
             "name": "Biscuit",
+            "gender": "unspecified",
             "configured": False,
             "city": "Beijing",
             "country": "China",
@@ -601,6 +603,10 @@ class PawndHandler(SimpleHTTPRequestHandler):
                 raise ValueError("That shore already belongs to your partner")
             profile["claimHash"] = incoming_claim_hash
             profile["name"] = str(action.get("name", profile["name"])).strip()[:24] or profile["name"]
+            gender = str(action.get("gender", profile.get("gender", "unspecified")))
+            if gender not in ("female", "male", "nonbinary", "unspecified"):
+                raise ValueError("Choose a valid pup gender")
+            profile["gender"] = gender
             profile["configured"] = True
             profile["city"] = str(action.get("city", profile["city"])).strip()[:80] or profile["city"]
             profile["country"] = str(action.get("country", profile["country"])).strip()[:80]
