@@ -1,0 +1,4 @@
+shared-state.json
+shared-state.tmp
+.pawnd-data/
+__pycache__/

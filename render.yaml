@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: across-the-pawnd
+    runtime: python
+    plan: starter
+    buildCommand: echo "No build step required"
+    startCommand: python3 server.py
+    healthCheckPath: /
+    envVars:
+      - key: PAWND_DATA_DIR
+        value: /var/data/pawnd
+    disk:
+      name: pawnd-data
+      mountPath: /var/data
+      sizeGB: 1

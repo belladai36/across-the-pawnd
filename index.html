@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Across the Pawnd — a tiny shared world for two pups on opposite shores."
+    />
+    <title>Across the Pawnd</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="auth-world" id="authWorld">
+      <div class="auth-glow"></div>
+      <section class="auth-card">
+        <span class="auth-paws">🐾</span>
+        <span class="eyebrow">ACROSS THE PAWND</span>
+        <h1>Find your private shore</h1>
+        <p>Every couple has a separate world. Share one room code and one password—everything inside belongs only to the two of you.</p>
+        <div class="auth-tabs" role="tablist">
+          <button class="active" id="joinTab" role="tab">Enter a Pawnd</button>
+          <button id="createTab" role="tab">Create a Pawnd</button>
+        </div>
+        <form class="auth-form" id="joinForm">
+          <label>
+            Private room code
+            <input id="joinRoomCode" autocomplete="username" maxlength="32" placeholder="e.g. moonlight-pups" required />
+          </label>
+          <label>
+            Shared password
+            <input id="joinPassword" type="password" autocomplete="current-password" minlength="6" placeholder="Your secret together" required />
+          </label>
+          <button class="primary-button full-button" type="submit">Cross into our Pawnd →</button>
+        </form>
+        <form class="auth-form" id="createForm" hidden>
+          <label>
+            Name your world
+            <input id="createRoomName" maxlength="50" placeholder="e.g. Bella & Xerxes’s Pawnd" required />
+          </label>
+          <label>
+            Choose a private room code
+            <input id="createRoomCode" autocomplete="username" maxlength="32" placeholder="e.g. moonlight-pups" required />
+            <small>Share this code with your partner.</small>
+          </label>
+          <label>
+            Create one shared password
+            <input id="createPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" required />
+          </label>
+          <button class="primary-button full-button" type="submit">Create our private Pawnd ✦</button>
+        </form>
+        <p class="auth-error" id="authError" role="alert" hidden></p>
+        <p class="auth-privacy">Passwords are never stored as readable text.</p>
+      </section>
+    </main>
+
+    <main class="world" id="world" hidden>
+      <div class="sky-glow"></div>
+      <div class="cloud cloud-one"></div>
+      <div class="cloud cloud-two"></div>
+
+      <header class="topbar">
+        <div class="music-control">
+          <button class="round-button sound-button" id="soundButton" aria-label="Turn adaptive music on">
+            <span aria-hidden="true">♫</span>
+          </button>
+          <span class="music-label" id="musicLabel">Music off</span>
+        </div>
+        <div class="brand">
+          <span class="eyebrow" id="privateRoomName">OUR LITTLE WORLD</span>
+          <h1>Across the Pawnd</h1>
+        </div>
+        <div class="header-actions">
+          <button class="heart-wallet" id="roomButton" aria-label="Open our shared room">
+            <span>♥</span><strong id="heartCount">0</strong>
+          </button>
+          <button class="identity-button" id="identityButton" aria-label="Choose who you are">
+            <span id="identityIcon">♡</span><span id="identityName">Who are you?</span>
+          </button>
+          <button class="round-button" id="helpButton" aria-label="Game instructions and settings">
+            <span aria-hidden="true">⚙</span>
+          </button>
+          <button class="round-button logout-button" id="logoutButton" aria-label="Leave this private Pawnd">
+            <span aria-hidden="true">↪</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="daily-card" aria-labelledby="dailyTitle">
+        <div class="daily-icon" aria-hidden="true">✦</div>
+        <div class="daily-copy">
+          <span class="eyebrow" id="dayLabel">DAY 1 OF 50 · TODAY’S LITTLE ADVENTURE</span>
+          <h2><span id="dailyTitle">A tiny piece of today</span> <span class="together-mark" id="togetherMark" title="Do this together" hidden>🐾🐾</span></h2>
+          <p id="dailyPrompt">Share one small thing that made you smile.</p>
+          <span class="reset-clock" id="taskResetClock">New task at 12:00 AM</span>
+        </div>
+        <button class="star-jar-button" id="starJarButton" aria-label="Open your star jar">
+          <span class="mini-jar" aria-hidden="true">
+            <span class="mini-jar-stars" id="miniJarStars"></span>
+          </span>
+          <span><strong id="starCount">0 / 50</strong><small>our star jar</small></span>
+        </button>
+        <button class="primary-button" id="adventureButton">Let’s do it <span>→</span></button>
+      </section>
+
+      <section class="scene" aria-label="The Pawnd">
+        <div class="shore-status-row" aria-label="Local time and weather on both shores">
+          <div class="shore-status status-left">
+            <span class="status-place" id="girlPlace">ST. LOUIS · HER SHORE</span>
+            <strong id="girlClock">--:--</strong>
+            <span id="girlWeather">Loading weather…</span>
+          </div>
+          <div class="shore-status status-right">
+            <span class="status-place" id="boyPlace">BEIJING · HIS SHORE</span>
+            <strong id="boyClock">--:--</strong>
+            <span id="boyWeather">Loading weather…</span>
+          </div>
+        </div>
+        <div class="distant-hills hills-left"></div>
+        <div class="distant-hills hills-right"></div>
+
+        <div class="shore shore-left">
+          <div class="house house-left" aria-hidden="true">
+            <div class="chimney"></div>
+            <div class="roof"></div>
+            <div class="house-body"><span class="window"></span><span class="door"></span></div>
+          </div>
+          <div class="dog-card dog-left" id="dogLeft" tabindex="0" role="button" aria-label="Send a paw tap">
+            <div class="dog-placeholder">
+              <span class="ear ear-left"></span><span class="ear ear-right"></span>
+              <span class="dog-face"><i></i><i></i><b></b></span>
+              <span class="dog-body"></span><span class="tail"></span>
+            </div>
+            <span class="dog-name" id="girlDogName">Mochi</span>
+          </div>
+          <div class="flowers flowers-left" aria-hidden="true">✿　·　✿</div>
+        </div>
+
+        <div class="water">
+          <div class="sun-reflection"></div>
+          <div class="ripple ripple-one"></div>
+          <div class="ripple ripple-two"></div>
+          <div class="ripple ripple-three"></div>
+          <div class="lake-bottles" id="lakeBottles" aria-label="Messages floating in the pawnd"></div>
+          <p class="empty-lake-note" id="emptyLakeNote">No bottles yet today</p>
+          <div class="lily lily-one" aria-hidden="true"></div>
+          <div class="lily lily-two" aria-hidden="true"></div>
+        </div>
+
+        <div class="shore shore-right">
+          <div class="house house-right" aria-hidden="true">
+            <div class="chimney"></div>
+            <div class="roof"></div>
+            <div class="house-body"><span class="window"></span><span class="door"></span></div>
+          </div>
+          <div class="dog-card dog-right" id="dogRight" tabindex="0" role="button" aria-label="Send a paw tap">
+            <div class="dog-placeholder dog-placeholder-dark">
+              <span class="ear ear-left"></span><span class="ear ear-right"></span>
+              <span class="dog-face"><i></i><i></i><b></b></span>
+              <span class="dog-body"></span><span class="tail"></span>
+            </div>
+            <span class="dog-name" id="boyDogName">Biscuit</span>
+          </div>
+          <div class="flowers flowers-right" aria-hidden="true">·　✿　·</div>
+        </div>
+
+        <p class="pawnd-label">the pawnd</p>
+      </section>
+
+      <nav class="action-dock" aria-label="Things to do">
+        <button class="dock-button" id="messageButton">
+          <span class="dock-icon bottle-icon" aria-hidden="true">♧</span>
+          <span><strong>Send a Bottle</strong><small>Leave something across</small></span>
+        </button>
+        <span class="dock-divider"></span>
+        <button class="dock-button" id="roomDockButton">
+          <span class="dock-icon pebble-icon" aria-hidden="true">⌂</span>
+          <span><strong>Our Little Room</strong><small>Build a home together</small></span>
+        </button>
+        <span class="dock-divider"></span>
+        <button class="dock-button" id="pawButton">
+          <span class="dock-icon" aria-hidden="true">🐾</span>
+          <span><strong>Paw Tap</strong><small>A tiny “thinking of you”</small></span>
+        </button>
+      </nav>
+
+      <p class="footer-note"><span id="dateLabel"></span> · The water is calm today.</p>
+    </main>
+
+    <dialog class="modal" id="adventureModal">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <span class="modal-symbol">✦</span>
+      <span class="eyebrow" id="modalDayLabel">DAY 1 OF 50</span>
+      <h2><span id="modalTaskTitle">A tiny piece of today</span> <span class="together-mark" id="modalTogetherMark" hidden>🐾🐾</span></h2>
+      <p>Share one small thing that made you smile. It can be wonderfully ordinary.</p>
+      <div class="task-meta">
+        <span id="taskCategory">Together</span>
+        <span>under 10 min</span>
+      </div>
+      <p class="task-tool-guidance" id="taskToolGuidance"></p>
+      <section class="drawing-board" id="drawingBoard" hidden>
+        <div class="drawing-board-heading">
+          <div>
+            <strong>Your drawing board</strong>
+            <span>Draw with a mouse or trackpad. On a phone or tablet, draw directly with your finger.</span>
+          </div>
+          <button class="secondary-button" id="clearDrawing" type="button">Clear</button>
+        </div>
+        <canvas id="taskCanvas" width="720" height="400" aria-label="Drawing board for today’s task"></canvas>
+      </section>
+      <textarea id="adventureAnswer" maxlength="400" placeholder="Leave your answer or a little note…"></textarea>
+      <div class="partner-progress" id="partnerProgress">
+        <span data-person="girl">○ Her answer</span>
+        <span data-person="boy">○ His answer</span>
+      </div>
+      <button class="hint-button" id="hintButton" hidden>Need a tiny hint?</button>
+      <p class="task-hint" id="taskHint" hidden></p>
+      <button class="primary-button full-button" id="completeAdventure">We did it — add a star ✦</button>
+      <p class="saved-note" id="adventureSaved" hidden>Today’s star is already in the jar ♡</p>
+      <div class="answer-reveal" id="answerReveal" hidden>
+        <span class="eyebrow">THE ANSWER</span>
+        <p id="correctAnswer"></p>
+      </div>
+    </dialog>
+
+    <dialog class="modal jar-modal" id="jarModal">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <span class="eyebrow">OUR 50-DAY ADVENTURE</span>
+      <h2>A jar full of little days</h2>
+      <p id="jarSummary">The first star is waiting for you.</p>
+      <div class="big-jar" aria-label="Collected stars">
+        <div class="jar-rim"></div>
+        <div class="jar-stars" id="jarStars"></div>
+        <div class="jar-shine"></div>
+      </div>
+      <div class="jar-progress">
+        <span id="jarProgressText">0 of 50 stars</span>
+        <span id="jarProgressPercent">0%</span>
+      </div>
+      <div class="progress-track"><i id="jarProgressBar"></i></div>
+      <button class="journey-toggle" id="journeyToggle">See the 50-day journey</button>
+      <div class="journey-grid" id="journeyGrid" hidden></div>
+    </dialog>
+
+    <dialog class="modal" id="messageModal">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <span class="modal-symbol">♧</span>
+      <span class="eyebrow">MESSAGE IN A BOTTLE</span>
+      <h2>Send something across</h2>
+      <p>Your note will bob gently on the water, waiting to be found.</p>
+      <div class="bottle-limit" id="bottleLimit">0 of 5 bottles sent today</div>
+      <p class="bottle-reset-note" id="bottleResetClock">Resets at 12:00 AM on your shore</p>
+      <textarea id="bottleMessage" maxlength="300" placeholder="A little note for you…"></textarea>
+      <label class="photo-picker">
+        <input id="bottleImage" type="file" accept="image/*" />
+        <span>＋ Add a photo</span>
+      </label>
+      <div class="image-preview" id="imagePreview" hidden>
+        <img id="previewImage" alt="Photo ready to send" />
+        <button id="removeImage" type="button" aria-label="Remove photo">×</button>
+      </div>
+      <div class="field-row">
+        <label>
+          Sign it as
+          <input id="bottleAuthor" maxlength="20" placeholder="Mochi" />
+        </label>
+        <label>
+          Let it arrive
+          <select id="bottleTiming">
+            <option value="now">Right away</option>
+            <option value="wander">Let it wander</option>
+          </select>
+        </label>
+      </div>
+      <button class="primary-button full-button" id="sendBottle">Push it into the pawnd</button>
+    </dialog>
+
+    <dialog class="modal" id="readModal">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <span class="modal-symbol">✉</span>
+      <span class="eyebrow">FOUND IN THE PAWND</span>
+      <blockquote id="bottleText">No bottles are floating here yet.</blockquote>
+      <img class="bottle-photo" id="bottlePhoto" alt="Photo sent in this bottle" hidden />
+      <p class="letter-signature" id="bottleSignature"></p>
+    </dialog>
+
+    <dialog class="modal instructions-modal" id="helpModal">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <span class="modal-symbol">?</span>
+      <span class="eyebrow">HOW TO PLAY</span>
+      <h2>Welcome to your interactive Pawnd</h2>
+      <p>
+        This is a two-player game for pups living on different shores. Visit whenever you
+        can, interact with each other, and slowly build a shared collection of memories.
+      </p>
+
+      <div class="instruction-steps">
+        <article>
+          <span class="instruction-icon">1</span>
+          <div>
+            <strong>Choose your pup</strong>
+            <p>Select your character on each device. You can give your pup a name and set
+              its city, timezone, local weather, and day or night. Major cities are found
+              automatically; missing locations can use a manually entered local date and time.</p>
+          </div>
+        </article>
+        <article>
+          <span class="instruction-icon">🐾🐾</span>
+          <div>
+            <strong>Look for the two-paw symbol</strong>
+            <p>Exactly seven tasks are live interactive games. They must be played together,
+              usually while calling or chatting. Both pups confirm completion before the
+              game awards two shared hearts.</p>
+          </div>
+        </article>
+        <article>
+          <span class="instruction-icon">✓</span>
+          <div>
+            <strong>Completion matters, not correctness</strong>
+            <p>Write your attempt and mark your half complete. Puzzles reveal their
+              reference answer afterward. Creative games have no wrong answer.</p>
+          </div>
+        </article>
+        <article>
+          <span class="instruction-icon">★</span>
+          <div>
+            <strong>Make one shared star</strong>
+            <p>Both pups complete the same daily task. When both halves arrive, one star
+              drops into the shared 50-day jar. A new task begins at 12:00 AM on the
+              shore chosen as your shared Pawnd clock.</p>
+          </div>
+        </article>
+        <article>
+          <span class="instruction-icon">♥</span>
+          <div>
+            <strong>Earn hearts and build a home</strong>
+            <p>Regular task submissions earn one heart. A completed two-paw game earns two
+              shared hearts. Each message or photo bottle earns another. Spend hearts on
+              furniture and freely decorate your room.</p>
+          </div>
+        </article>
+        <article>
+          <span class="instruction-icon">✉</span>
+          <div>
+            <strong>Send something across</strong>
+            <p>Each pup may send up to five note or photo bottles per local day. They float
+              visibly in the lake, and either pup can open any bottle. Each pup’s allowance
+              resets at 12:00 AM on their own shore.</p>
+          </div>
+        </article>
+        <article>
+          <span class="instruction-icon">♫</span>
+          <div>
+            <strong>Let the world make music</strong>
+            <p>Turn on the instrumental soundtrack in the top-left corner. It changes with
+              the page, daily task, selected pup, local time, and weather.</p>
+          </div>
+        </article>
+      </div>
+
+      <p class="tiny-note">
+        There are no streaks and no punishment. If you miss a day, the adventure simply
+        waits beside the water.
+      </p>
+      <div class="settings-block">
+        <span class="eyebrow">YOUR PUP &amp; YOUR SHORE</span>
+        <label>
+          Your pup’s name
+          <input id="profileNameInput" maxlength="24" placeholder="e.g. Mochi" />
+        </label>
+        <label>
+          City
+          <input id="profileCityInput" placeholder="e.g. St. Louis or Shanghai" />
+        </label>
+        <label>
+          Country or region
+          <input id="profileRegionInput" placeholder="e.g. United States, China, France" />
+        </label>
+        <button class="primary-button full-button" id="saveProfile">Find my city &amp; share timezone</button>
+        <div class="manual-time-box" id="manualTimeBox" hidden>
+          <span class="eyebrow">CITY NOT FOUND · SET TIME MANUALLY</span>
+          <p>Enter the date and time currently shown on your phone. We will keep this shore’s clock moving from there.</p>
+          <label>
+            Your local date and time
+            <input id="manualLocalTime" type="datetime-local" />
+          </label>
+          <button class="secondary-button full-button" id="saveManualTime">Use this local time</button>
+        </div>
+        <p class="settings-note">Major cities are matched automatically. If yours is missing, manual local time is available.</p>
+        <div class="daily-reset-setting">
+          <span class="eyebrow">SHARED TASK DAY</span>
+          <p>Both pups must see the same daily task. Choose which shore’s midnight starts a new Pawnd day.</p>
+          <label>
+            New task at 12:00 AM on
+            <select id="dailyResetOwner">
+              <option value="girl">Left shore</option>
+              <option value="boy">Right shore</option>
+            </select>
+          </label>
+          <button class="secondary-button full-button" id="saveDailyReset">Use this shore’s midnight</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="modal identity-modal" id="identityModal">
+      <span class="modal-symbol">🐾</span>
+      <span class="eyebrow">WELCOME TO YOUR SHARED PAWND</span>
+      <h2>Create your pup</h2>
+      <p>Choose your shore, then tell the Pawnd your real name and location. This device will remember which pup is yours.</p>
+      <form class="identity-setup-form" id="identitySetupForm">
+        <fieldset>
+          <legend>Which shore is yours?</legend>
+          <div class="identity-choices">
+            <button type="button" data-identity="girl">
+              <strong>Left shore</strong>
+              <span id="girlIdentityCity">Not set up yet</span>
+            </button>
+            <button type="button" data-identity="boy">
+              <strong>Right shore</strong>
+              <span id="boyIdentityCity">Not set up yet</span>
+            </button>
+          </div>
+        </fieldset>
+        <label>
+          Your name
+          <input id="identityProfileName" maxlength="24" placeholder="e.g. Bella" required />
+        </label>
+        <label>
+          Your city
+          <input id="identityProfileCity" maxlength="80" placeholder="e.g. St. Louis" required />
+        </label>
+        <label>
+          Country or region
+          <input id="identityProfileRegion" maxlength="80" placeholder="e.g. United States" required />
+        </label>
+        <div class="manual-time-box" id="identityManualTimeBox" hidden>
+          <p>We couldn’t match that city. Enter your current local date and time so your shore can still keep the right clock.</p>
+          <label>
+            Your local date and time
+            <input id="identityManualLocalTime" type="datetime-local" />
+          </label>
+        </div>
+        <button class="primary-button full-button" id="saveIdentityProfile" type="submit">Save my pup ✦</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal room-modal" id="roomModal">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <div class="room-heading">
+        <div>
+          <span class="eyebrow">OUR LITTLE ROOM</span>
+          <h2>A home built from small things</h2>
+        </div>
+        <div class="room-wallet">♥ <strong id="roomHeartCount">0</strong></div>
+      </div>
+      <p>Finish a task or send a bottle to earn one shared heart. Buy something, then choose where it should live.</p>
+      <div class="tiny-room" id="tinyRoom">
+        <div class="room-wall"></div>
+        <div class="room-floor"></div>
+        <div class="placed-furniture" id="placedFurniture"></div>
+      </div>
+      <div class="room-edit-bar" id="roomEditBar" hidden>
+        <strong id="selectedFurnitureName">Selected furniture</strong>
+        <button id="shrinkFurniture" aria-label="Make selected furniture smaller">−</button>
+        <button id="growFurniture" aria-label="Make selected furniture larger">＋</button>
+        <button id="frontFurniture">Bring forward</button>
+        <button id="storeFurniture">Put away</button>
+      </div>
+      <p class="placement-note" id="placementNote">Buy or select an item, then tap anywhere in the room. Drag placed items to move them.</p>
+      <div class="furniture-shop" id="furnitureShop"></div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="paw-burst" id="pawBurst" aria-hidden="true">🐾</div>
+    <div class="flying-star" id="flyingStar" aria-hidden="true">★</div>
+
+    <section class="tutorial-overlay" id="tutorialOverlay" hidden aria-label="Game introduction">
+      <div class="tutorial-sky">
+        <span class="tutorial-star star-a">✦</span>
+        <span class="tutorial-star star-b">✧</span>
+        <span class="tutorial-star star-c">✦</span>
+      </div>
+      <div class="tutorial-card">
+        <span class="eyebrow">WELCOME TO YOUR PRIVATE PAWND</span>
+        <div class="tutorial-scenes" id="tutorialScenes">
+          <article class="tutorial-slide active" data-slide="0">
+            <div class="tutorial-visual two-shores"><span>🐶</span><i>～～～～</i><span>🐕</span></div>
+            <h2>Two pups, one shared world</h2>
+            <p>You each choose a pup, name it, and set its location. Your clocks, weather, and shores grow around you.</p>
+          </article>
+          <article class="tutorial-slide" data-slide="1">
+            <div class="tutorial-visual tutorial-task">🐾🐾 <span>＋</span> ✦</div>
+            <h2>Complete little adventures</h2>
+            <p>Most tasks can be answered in your own time. Seven special two-paw games require both of you together and reward two shared hearts.</p>
+          </article>
+          <article class="tutorial-slide" data-slide="2">
+            <div class="tutorial-visual tutorial-bottles">⚱　⚱　⚱</div>
+            <h2>Leave something across the water</h2>
+            <p>Send notes and photos in drifting bottles. Both pups can open every bottle floating in their private lake.</p>
+          </article>
+          <article class="tutorial-slide" data-slide="3">
+            <div class="tutorial-visual tutorial-home">♥ → 🏡</div>
+            <h2>Build a home together</h2>
+            <p>Tasks and bottles earn hearts. Spend them on furniture, then freely drag, resize, and arrange your shared room.</p>
+          </article>
+          <article class="tutorial-slide" data-slide="4">
+            <div class="tutorial-visual tutorial-music">☀　♫　🌙</div>
+            <h2>Your world has its own soundtrack</h2>
+            <p>Music changes with the page, the daily adventure, your weather, and the local time on your selected shore.</p>
+          </article>
+        </div>
+        <div class="tutorial-dots" id="tutorialDots"></div>
+        <div class="tutorial-actions">
+          <button class="secondary-button" id="tutorialSkip" hidden>Skip introduction</button>
+          <button class="primary-button" id="tutorialNext">Next →</button>
+        </div>
+      </div>
+    </section>
+
+    <script src="script.js"></script>
+  </body>
+</html>
