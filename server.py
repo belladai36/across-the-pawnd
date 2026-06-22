@@ -390,6 +390,7 @@ class PawndHandler(SimpleHTTPRequestHandler):
         state["roomName"] = load_registry()[room_code]["name"]
         for profile in state["profiles"].values():
             profile.pop("claimHash", None)
+            profile.pop("claimHashes", None)
         return state
 
     def do_GET(self):
@@ -641,6 +642,24 @@ class PawndHandler(SimpleHTTPRequestHandler):
             })
             state["bottles"] = state["bottles"][-100:]
             state["economy"]["hearts"] += 1
+        elif kind == "claimProfile":
+            person = action.get("person")
+            if person not in ("girl", "boy"):
+                raise ValueError("Choose a valid pup")
+            profile = state["profiles"][person]
+            if not profile.get("configured"):
+                raise ValueError("That pup has not been created yet")
+            claim_token = str(action.get("claimToken", ""))
+            if len(claim_token) < 16:
+                raise ValueError("This device cannot remember that pup")
+            incoming_claim_hash = hashlib.sha256(claim_token.encode()).hexdigest()
+            claim_hashes = list(profile.get("claimHashes", []))
+            legacy_claim = profile.get("claimHash")
+            if legacy_claim and legacy_claim not in claim_hashes:
+                claim_hashes.append(legacy_claim)
+            if incoming_claim_hash not in claim_hashes:
+                claim_hashes.append(incoming_claim_hash)
+            profile["claimHashes"] = claim_hashes[-12:]
         elif kind == "updateProfile":
             person = action.get("person")
             if person not in ("girl", "boy"):
@@ -650,12 +669,19 @@ class PawndHandler(SimpleHTTPRequestHandler):
             if len(claim_token) < 16:
                 raise ValueError("This device cannot edit that shore")
             incoming_claim_hash = hashlib.sha256(claim_token.encode()).hexdigest()
-            existing_claim_hash = profile.get("claimHash")
-            if existing_claim_hash and not hmac.compare_digest(
-                existing_claim_hash, incoming_claim_hash
+            claim_hashes = list(profile.get("claimHashes", []))
+            legacy_claim = profile.get("claimHash")
+            if legacy_claim and legacy_claim not in claim_hashes:
+                claim_hashes.append(legacy_claim)
+            if profile.get("configured") and claim_hashes and not any(
+                hmac.compare_digest(saved_hash, incoming_claim_hash)
+                for saved_hash in claim_hashes
             ):
                 raise ValueError("That shore already belongs to your partner")
-            profile["claimHash"] = incoming_claim_hash
+            if incoming_claim_hash not in claim_hashes:
+                claim_hashes.append(incoming_claim_hash)
+            profile["claimHashes"] = claim_hashes[-12:]
+            profile.pop("claimHash", None)
             profile["name"] = str(action.get("name", profile["name"])).strip()[:24] or profile["name"]
             gender = str(action.get("gender", profile.get("gender", "unspecified")))
             if gender not in ("female", "male", "nonbinary", "unspecified"):

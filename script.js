@@ -12,6 +12,9 @@ const storage = {
   set(key, value) {
     localStorage.setItem(`pawnd:${key}`, JSON.stringify(value));
   },
+  remove(key) {
+    localStorage.removeItem(`pawnd:${key}`);
+  },
 };
 
 const tasks = [
@@ -854,23 +857,21 @@ $("#tutorialSkip").addEventListener("click", finishTutorial);
 
 function openIdentitySetup() {
   pendingIdentity = identity || "";
+  const choosingOnNewDevice = !identity;
+  $("#identityModalTitle").textContent = choosingOnNewDevice ? "Which pup are you?" : "Edit your pup";
+  $("#identityModalNote").textContent = choosingOnNewDevice
+    ? "Choose your existing pup, or create the shore that is still waiting. This device will remember your choice."
+    : "You can update your own pup’s name, gender, and location.";
   $$(".identity-choices [data-identity]").forEach((button) => {
     button.classList.toggle("selected", button.dataset.identity === pendingIdentity);
     const person = button.dataset.identity;
-    button.disabled = identity
-      ? identity !== person
-      : sharedState.profiles[person].configured;
+    button.disabled = Boolean(identity && identity !== person);
   });
-  if (!pendingIdentity) {
-    const available = [...$$(".identity-choices [data-identity]")].filter(
-      (button) => !button.disabled,
-    );
-    if (available.length === 1) pendingIdentity = available[0].dataset.identity;
-  }
   $$(".identity-choices [data-identity]").forEach((button) => {
     button.classList.toggle("selected", button.dataset.identity === pendingIdentity);
   });
   const profile = pendingIdentity ? sharedState.profiles[pendingIdentity] : null;
+  $("#identityProfileFields").hidden = !profile || (choosingOnNewDevice && profile.configured);
   $("#identityProfileName").value = profile?.configured ? profile.name : "";
   $("#identityProfileGender").value = profile?.gender || "unspecified";
   $("#identityProfileCity").value = profile?.configured ? profile.city : "";
@@ -881,14 +882,38 @@ function openIdentitySetup() {
 }
 
 $("#identityButton").addEventListener("click", openIdentitySetup);
-$(".identity-choices").addEventListener("click", (event) => {
+async function chooseExistingIdentity(person) {
+  try {
+    await apiAction({
+      type: "claimProfile",
+      person,
+      claimToken: identityClaimToken(person),
+    });
+    identity = person;
+    storage.set(roomIdentityKey(), identity);
+    pendingIdentity = person;
+    closeModal($("#identityModal"));
+    renderAll();
+    adaptiveMusic.updateScene();
+    showToast(`This device now remembers ${sharedState.profiles[person].name}.`);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+$(".identity-choices").addEventListener("click", async (event) => {
   const choice = event.target.closest("[data-identity]");
   if (!choice || choice.disabled) return;
   pendingIdentity = choice.dataset.identity;
+  const profile = sharedState.profiles[pendingIdentity];
+  if (!identity && profile.configured) {
+    await chooseExistingIdentity(pendingIdentity);
+    return;
+  }
   $$(".identity-choices [data-identity]").forEach((button) => {
     button.classList.toggle("selected", button.dataset.identity === pendingIdentity);
   });
-  const profile = sharedState.profiles[pendingIdentity];
+  $("#identityProfileFields").hidden = false;
   $("#identityProfileName").value = profile.configured ? profile.name : "";
   $("#identityProfileGender").value = profile.gender || "unspecified";
   $("#identityProfileCity").value = profile.configured ? profile.city : "";
@@ -1795,6 +1820,18 @@ $("#soundButton").addEventListener("click", async () => {
 async function enterAuthenticatedWorld() {
   const synced = await syncState({ quiet: true });
   if (!synced) return;
+  if (identity && sharedState.profiles[identity]?.configured) {
+    try {
+      await apiAction({
+        type: "claimProfile",
+        person: identity,
+        claimToken: identityClaimToken(identity),
+      });
+    } catch {
+      identity = null;
+      storage.remove(roomIdentityKey());
+    }
+  }
   $("#privateRoomName").textContent = sharedState.roomName.toUpperCase();
   updateClocks();
   updateWeather();

@@ -430,8 +430,8 @@
     <dialog class="modal identity-modal" id="identityModal">
       <span class="modal-symbol">🐾</span>
       <span class="eyebrow">WELCOME TO YOUR SHARED PAWND</span>
-      <h2>Create your pup</h2>
-      <p>Choose your shore, then tell the Pawnd your real name and location. This device will remember which pup is yours.</p>
+      <h2 id="identityModalTitle">Choose your pup</h2>
+      <p id="identityModalNote">Select who you are on this device. You can use the same pup on your phone and computer.</p>
       <form class="identity-setup-form" id="identitySetupForm">
         <fieldset>
           <legend>Which shore is yours?</legend>
@@ -446,45 +446,47 @@
             </button>
           </div>
         </fieldset>
-        <label>
-          Your name
-          <input id="identityProfileName" maxlength="24" placeholder="e.g. Bella" required />
-        </label>
-        <label>
-          Your pup’s gender
-          <select id="identityProfileGender">
-            <option value="unspecified">Not specified</option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
-            <option value="nonbinary">Non-binary</option>
-          </select>
-        </label>
-        <label>
-          Country / region
-          <input id="identityProfileRegion" list="identityCountryOptions" maxlength="80"
-            placeholder="Type or choose a country" autocomplete="off" required />
-          <datalist id="identityCountryOptions"></datalist>
-        </label>
-        <label>
-          State / province / county
-          <input id="identityProfileAdmin" list="identityAdminOptions" maxlength="80"
-            placeholder="e.g. Missouri, Hubei" autocomplete="off" />
-          <datalist id="identityAdminOptions"></datalist>
-        </label>
-        <label>
-          Your city
-          <input id="identityProfileCity" list="identityCityOptions" maxlength="80"
-            placeholder="Start typing a city" autocomplete="off" required />
-          <datalist id="identityCityOptions"></datalist>
-        </label>
-        <div class="manual-time-box" id="identityManualTimeBox" hidden>
-          <p>We couldn’t match that city. Enter your current local date and time so your shore can still keep the right clock.</p>
+        <div class="identity-profile-fields" id="identityProfileFields" hidden>
           <label>
-            Your local date and time
-            <input id="identityManualLocalTime" type="datetime-local" />
+            Your name
+            <input id="identityProfileName" maxlength="24" placeholder="e.g. Bella" required />
           </label>
+          <label>
+            Your pup’s gender
+            <select id="identityProfileGender">
+              <option value="unspecified">Not specified</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="nonbinary">Non-binary</option>
+            </select>
+          </label>
+          <label>
+            Country / region
+            <input id="identityProfileRegion" list="identityCountryOptions" maxlength="80"
+              placeholder="Type or choose a country" autocomplete="off" required />
+            <datalist id="identityCountryOptions"></datalist>
+          </label>
+          <label>
+            State / province / county
+            <input id="identityProfileAdmin" list="identityAdminOptions" maxlength="80"
+              placeholder="e.g. Missouri, Hubei" autocomplete="off" />
+            <datalist id="identityAdminOptions"></datalist>
+          </label>
+          <label>
+            Your city
+            <input id="identityProfileCity" list="identityCityOptions" maxlength="80"
+              placeholder="Start typing a city" autocomplete="off" required />
+            <datalist id="identityCityOptions"></datalist>
+          </label>
+          <div class="manual-time-box" id="identityManualTimeBox" hidden>
+            <p>We couldn’t match that city. Enter your current local date and time so your shore can still keep the right clock.</p>
+            <label>
+              Your local date and time
+              <input id="identityManualLocalTime" type="datetime-local" />
+            </label>
+          </div>
+          <button class="primary-button full-button" id="saveIdentityProfile" type="submit">Save my pup ✦</button>
         </div>
-        <button class="primary-button full-button" id="saveIdentityProfile" type="submit">Save my pup ✦</button>
       </form>
     </dialog>
 
