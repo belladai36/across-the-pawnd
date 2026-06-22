@@ -384,12 +384,22 @@
           </select>
         </label>
         <label>
-          City
-          <input id="profileCityInput" placeholder="e.g. St. Louis or Shanghai" />
+          Country / region
+          <input id="profileRegionInput" list="profileCountryOptions"
+            placeholder="Type or choose a country" autocomplete="off" />
+          <datalist id="profileCountryOptions"></datalist>
         </label>
         <label>
-          Country or region
-          <input id="profileRegionInput" placeholder="e.g. United States, China, France" />
+          State / province / county
+          <input id="profileAdminInput" list="profileAdminOptions"
+            placeholder="e.g. Missouri, Hubei" autocomplete="off" />
+          <datalist id="profileAdminOptions"></datalist>
+        </label>
+        <label>
+          City
+          <input id="profileCityInput" list="profileCityOptions"
+            placeholder="Start typing a city" autocomplete="off" />
+          <datalist id="profileCityOptions"></datalist>
         </label>
         <button class="primary-button full-button" id="saveProfile">Find my city &amp; share timezone</button>
         <div class="manual-time-box" id="manualTimeBox" hidden>
@@ -450,12 +460,22 @@
           </select>
         </label>
         <label>
-          Your city
-          <input id="identityProfileCity" maxlength="80" placeholder="e.g. St. Louis" required />
+          Country / region
+          <input id="identityProfileRegion" list="identityCountryOptions" maxlength="80"
+            placeholder="Type or choose a country" autocomplete="off" required />
+          <datalist id="identityCountryOptions"></datalist>
         </label>
         <label>
-          Country or region
-          <input id="identityProfileRegion" maxlength="80" placeholder="e.g. United States" required />
+          State / province / county
+          <input id="identityProfileAdmin" list="identityAdminOptions" maxlength="80"
+            placeholder="e.g. Missouri, Hubei" autocomplete="off" />
+          <datalist id="identityAdminOptions"></datalist>
+        </label>
+        <label>
+          Your city
+          <input id="identityProfileCity" list="identityCityOptions" maxlength="80"
+            placeholder="Start typing a city" autocomplete="off" required />
+          <datalist id="identityCityOptions"></datalist>
         </label>
         <div class="manual-time-box" id="identityManualTimeBox" hidden>
           <p>We couldn’t match that city. Enter your current local date and time so your shore can still keep the right clock.</p>

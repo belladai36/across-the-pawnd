@@ -35,6 +35,7 @@ DEFAULT_STATE = {
             "gender": "unspecified",
             "configured": False,
             "city": "St. Louis",
+            "adminArea": "",
             "country": "United States",
             "latitude": 38.627,
             "longitude": -90.1994,
@@ -49,6 +50,7 @@ DEFAULT_STATE = {
             "gender": "unspecified",
             "configured": False,
             "city": "Beijing",
+            "adminArea": "",
             "country": "China",
             "latitude": 39.9042,
             "longitude": 116.4074,
@@ -99,19 +101,57 @@ def geocode_place(city, region):
         candidate_city = normalized_place(candidate.get("name", ""))
         country = normalized_place(candidate.get("country", ""))
         admin = normalized_place(candidate.get("admin1", ""))
+        county = normalized_place(candidate.get("admin2", ""))
         country_code = normalized_place(candidate.get("country_code", ""))
         points = 8 if candidate_city == wanted_city else 0
         if not points and (wanted_city in candidate_city or candidate_city in wanted_city):
             points += 4
         if wanted_region:
-            if wanted_region in (country, admin, country_code):
+            if wanted_region in (country, admin, county, country_code):
                 points += 8
-            elif wanted_region in country or wanted_region in admin:
+            elif wanted_region in country or wanted_region in admin or wanted_region in county:
                 points += 5
         points += min(int(candidate.get("population") or 0) // 1_000_000, 3)
         return points
 
     return max(candidates, key=score)
+
+
+def location_suggestions(query, region):
+    query = str(query).strip()[:80]
+    region = str(region).strip()[:120]
+    if len(query) < 2:
+        return []
+    search = re.sub(r"[\W_]+", " ", query, flags=re.UNICODE).strip() or query
+    url = (
+        "https://geocoding-api.open-meteo.com/v1/search"
+        f"?name={quote(search)}&count=12&language=en&format=json"
+    )
+    candidates = fetch_public_json(url).get("results", [])
+    wanted_region = normalized_place(region)
+    if wanted_region:
+        candidates.sort(
+            key=lambda item: wanted_region not in normalized_place(
+                " ".join(
+                    str(item.get(key, ""))
+                    for key in ("country", "country_code", "admin1", "admin2")
+                )
+            )
+        )
+    return [
+        {
+            "name": item.get("name", ""),
+            "admin1": item.get("admin1", ""),
+            "admin2": item.get("admin2", ""),
+            "country": item.get("country", ""),
+            "country_code": item.get("country_code", ""),
+            "latitude": item.get("latitude"),
+            "longitude": item.get("longitude"),
+            "timezone": item.get("timezone", "UTC"),
+            "utc_offset_seconds": item.get("utc_offset_seconds", 0),
+        }
+        for item in candidates[:10]
+    ]
 
 def profile_now(state, person):
     profile = state["profiles"].get(person, {})
@@ -390,6 +430,20 @@ class PawndHandler(SimpleHTTPRequestHandler):
             except Exception:
                 self.send_json(502, {"error": "City lookup is temporarily unavailable"})
             return
+        if path == "/api/location-suggestions":
+            if not self.authenticated_room():
+                self.send_json(401, {"error": "Please enter your private Pawnd"})
+                return
+            query = parse_qs(parsed.query)
+            try:
+                suggestions = location_suggestions(
+                    query.get("q", [""])[0],
+                    query.get("region", [""])[0],
+                )
+                self.send_json(200, {"suggestions": suggestions})
+            except Exception:
+                self.send_json(502, {"error": "Location suggestions are temporarily unavailable"})
+            return
         if path == "/api/weather":
             if not self.authenticated_room():
                 self.send_json(401, {"error": "Please enter your private Pawnd"})
@@ -609,6 +663,7 @@ class PawndHandler(SimpleHTTPRequestHandler):
             profile["gender"] = gender
             profile["configured"] = True
             profile["city"] = str(action.get("city", profile["city"])).strip()[:80] or profile["city"]
+            profile["adminArea"] = str(action.get("adminArea", profile.get("adminArea", ""))).strip()[:80]
             profile["country"] = str(action.get("country", profile["country"])).strip()[:80]
             mode = str(action.get("timeMode", "timezone"))
             if mode == "manual":

@@ -149,8 +149,8 @@ let sharedState = {
   journey: { completed: [], notes: {}, startedOn: "" },
   bottles: [],
   profiles: {
-    girl: { name: "Mochi", gender: "unspecified", configured: false, city: "St. Louis", country: "United States", latitude: 38.627, longitude: -90.1994, timezone: "America/Chicago" },
-    boy: { name: "Biscuit", gender: "unspecified", configured: false, city: "Beijing", country: "China", latitude: 39.9042, longitude: 116.4074, timezone: "Asia/Shanghai" },
+    girl: { name: "Mochi", gender: "unspecified", configured: false, city: "St. Louis", adminArea: "", country: "United States", latitude: 38.627, longitude: -90.1994, timezone: "America/Chicago" },
+    boy: { name: "Biscuit", gender: "unspecified", configured: false, city: "Beijing", adminArea: "", country: "China", latitude: 39.9042, longitude: 116.4074, timezone: "Asia/Shanghai" },
   },
   economy: { hearts: 0 },
   room: { inventory: [], placed: {} },
@@ -181,6 +181,8 @@ const shoreWeather = {
   boy: { code: 0, isDay: 1 },
 };
 const weatherLocationCache = new Map();
+const locationSuggestionSets = { identity: [], profile: [] };
+let locationSuggestionTimer = 0;
 
 $("#dateLabel").textContent = today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
@@ -213,6 +215,70 @@ async function findCity(city, region) {
   if (!response.ok) throw new Error(result.error || "City lookup failed");
   return result.match || null;
 }
+
+async function suggestLocations(query, region) {
+  const params = new URLSearchParams({ q: query, region });
+  const response = await fetch(`/api/location-suggestions?${params}`, { cache: "no-store" });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "Location suggestions failed");
+  return result.suggestions || [];
+}
+
+function locationRegion(adminArea, country) {
+  return [adminArea, country].filter(Boolean).join(", ");
+}
+
+function fillLocationLists(prefix, suggestions) {
+  locationSuggestionSets[prefix] = suggestions;
+  const idPrefix = prefix === "identity" ? "identity" : "profile";
+  $(`#${idPrefix}CityOptions`).innerHTML = suggestions.map((item) =>
+    `<option value="${escapeHtml(item.name)}">${escapeHtml(
+      [item.admin1, item.admin2, item.country].filter(Boolean).join(", "),
+    )}</option>`
+  ).join("");
+  $(`#${idPrefix}AdminOptions`).innerHTML = [...new Set(suggestions.flatMap(
+    (item) => [item.admin1, item.admin2].filter(Boolean),
+  ))].map((value) => `<option value="${escapeHtml(value)}"></option>`).join("");
+  $(`#${idPrefix}CountryOptions`).innerHTML = [...new Set(suggestions.map(
+    (item) => item.country,
+  ).filter(Boolean))].map((value) => `<option value="${escapeHtml(value)}"></option>`).join("");
+}
+
+function bindLocationPicker(prefix) {
+  const idPrefix = prefix === "identity" ? "identity" : "profile";
+  const city = $(`#${idPrefix}ProfileCity`) || $(`#${idPrefix}CityInput`);
+  const admin = $(`#${idPrefix}ProfileAdmin`) || $(`#${idPrefix}AdminInput`);
+  const country = $(`#${idPrefix}ProfileRegion`) || $(`#${idPrefix}RegionInput`);
+  city.addEventListener("input", () => {
+    clearTimeout(locationSuggestionTimer);
+    if (city.value.trim().length < 2) return fillLocationLists(prefix, []);
+    locationSuggestionTimer = setTimeout(async () => {
+      try {
+        fillLocationLists(
+          prefix,
+          await suggestLocations(city.value.trim(), locationRegion(admin.value, country.value)),
+        );
+      } catch {
+        fillLocationLists(prefix, []);
+      }
+    }, 220);
+  });
+  city.addEventListener("change", () => {
+    const wantedCity = city.value.trim().toLowerCase();
+    const selected = locationSuggestionSets[prefix].find(
+      (item) => item.name.toLowerCase() === wantedCity
+        && (!country.value || item.country.toLowerCase().includes(country.value.toLowerCase())),
+    ) || locationSuggestionSets[prefix].find(
+      (item) => item.name.toLowerCase() === wantedCity,
+    );
+    if (!selected) return;
+    admin.value = selected.admin1 || selected.admin2 || "";
+    country.value = selected.country || "";
+  });
+}
+
+bindLocationPicker("identity");
+bindLocationPicker("profile");
 
 function showAuth(error = "") {
   $("#authWorld").hidden = false;
@@ -532,6 +598,7 @@ function renderProfiles() {
     $("#profileNameInput").value = profile.name;
     $("#profileGenderInput").value = profile.gender || "unspecified";
     $("#profileCityInput").value = profile.city;
+    $("#profileAdminInput").value = profile.adminArea || "";
     $("#profileRegionInput").value = profile.country || "";
   }
 }
@@ -807,6 +874,7 @@ function openIdentitySetup() {
   $("#identityProfileName").value = profile?.configured ? profile.name : "";
   $("#identityProfileGender").value = profile?.gender || "unspecified";
   $("#identityProfileCity").value = profile?.configured ? profile.city : "";
+  $("#identityProfileAdmin").value = profile?.configured ? profile.adminArea || "" : "";
   $("#identityProfileRegion").value = profile?.configured ? profile.country || "" : "";
   $("#identityManualTimeBox").hidden = true;
   openModal("#identityModal");
@@ -824,6 +892,7 @@ $(".identity-choices").addEventListener("click", (event) => {
   $("#identityProfileName").value = profile.configured ? profile.name : "";
   $("#identityProfileGender").value = profile.gender || "unspecified";
   $("#identityProfileCity").value = profile.configured ? profile.city : "";
+  $("#identityProfileAdmin").value = profile.configured ? profile.adminArea || "" : "";
   $("#identityProfileRegion").value = profile.configured ? profile.country || "" : "";
 });
 
@@ -839,8 +908,9 @@ $("#identitySetupForm").addEventListener("submit", async (event) => {
   const name = $("#identityProfileName").value.trim();
   const gender = $("#identityProfileGender").value;
   const city = $("#identityProfileCity").value.trim();
-  const region = $("#identityProfileRegion").value.trim();
-  if (!name || !city || !region) return showToast("Enter your name, city, and country or region.");
+  const adminArea = $("#identityProfileAdmin").value.trim();
+  const country = $("#identityProfileRegion").value.trim();
+  if (!name || !city || !country) return showToast("Enter your name, city, and country or region.");
 
   const saveIdentity = async (location) => {
     await apiAction({
@@ -850,6 +920,7 @@ $("#identitySetupForm").addEventListener("submit", async (event) => {
       name,
       gender,
       city: location.city,
+      adminArea: location.adminArea,
       country: location.country,
       ...location.time,
     });
@@ -869,7 +940,8 @@ $("#identitySetupForm").addEventListener("submit", async (event) => {
     try {
       await saveIdentity({
         city,
-        country: region,
+        adminArea,
+        country,
         time: { timeMode: "manual", manualLocalIso },
       });
     } catch (error) {
@@ -880,7 +952,7 @@ $("#identitySetupForm").addEventListener("submit", async (event) => {
 
   let match;
   try {
-    match = await findCity(city, region);
+    match = await findCity(city, locationRegion(adminArea, country));
     if (!match) {
       $("#identityManualTimeBox").hidden = false;
       const local = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
@@ -897,7 +969,8 @@ $("#identitySetupForm").addEventListener("submit", async (event) => {
   try {
     await saveIdentity({
       city: match.name,
-      country: match.country || region,
+      adminArea: match.admin1 || match.admin2 || adminArea,
+      country: match.country || country,
       time: {
         latitude: match.latitude,
         longitude: match.longitude,
@@ -1063,10 +1136,11 @@ $("#saveProfile").addEventListener("click", async () => {
   const name = $("#profileNameInput").value.trim();
   const gender = $("#profileGenderInput").value;
   const city = $("#profileCityInput").value.trim();
-  const region = $("#profileRegionInput").value.trim();
+  const adminArea = $("#profileAdminInput").value.trim();
+  const country = $("#profileRegionInput").value.trim();
   if (!name || !city) return showToast("Give your pup a name and city first.");
   try {
-    const match = await findCity(city, region);
+    const match = await findCity(city, locationRegion(adminArea, country));
     if (!match) {
       $("#manualTimeBox").hidden = false;
       if (!$("#manualLocalTime").value) {
@@ -1082,6 +1156,7 @@ $("#saveProfile").addEventListener("click", async () => {
       name,
       gender,
       city: match.name,
+      adminArea: match.admin1 || match.admin2 || adminArea,
       country: match.country || "",
       latitude: match.latitude,
       longitude: match.longitude,
@@ -1105,7 +1180,8 @@ $("#saveManualTime").addEventListener("click", async () => {
   const name = $("#profileNameInput").value.trim();
   const gender = $("#profileGenderInput").value;
   const city = $("#profileCityInput").value.trim();
-  const region = $("#profileRegionInput").value.trim();
+  const adminArea = $("#profileAdminInput").value.trim();
+  const country = $("#profileRegionInput").value.trim();
   const manualLocalIso = $("#manualLocalTime").value;
   if (!name || !city || !manualLocalIso) return showToast("Enter your name, location, date, and local time.");
   try {
@@ -1116,7 +1192,8 @@ $("#saveManualTime").addEventListener("click", async () => {
       name,
       gender,
       city,
-      country: region,
+      adminArea,
+      country,
       timeMode: "manual",
       manualLocalIso,
     });
@@ -1310,10 +1387,13 @@ async function weatherLocation(profile) {
   ) {
     return profile;
   }
-  const key = `${profile.city || ""}|${profile.country || ""}`.toLowerCase();
+  const key = `${profile.city || ""}|${profile.adminArea || ""}|${profile.country || ""}`.toLowerCase();
   if (!key.replace("|", "").trim()) return null;
   if (!weatherLocationCache.has(key)) {
-    const lookup = findCity(profile.city || "", profile.country || "")
+    const lookup = findCity(
+      profile.city || "",
+      locationRegion(profile.adminArea || "", profile.country || ""),
+    )
       .catch((error) => {
         weatherLocationCache.delete(key);
         throw error;
