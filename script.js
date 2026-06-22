@@ -598,10 +598,16 @@ function sentTodayBy(person) {
 
 function renderBottles() {
   const bottles = bottlesInLake();
+  // Keep every bottle inside the open-water channel. The shores curve inward,
+  // so lower rows stay closer to the center than the upper rows.
   const positions = [
-    [45, 25], [55, 48], [35, 60], [64, 22], [49, 65],
-    [26, 36], [73, 56], [40, 43], [60, 63], [52, 33],
+    [44, 17], [56, 17],
+    [40, 31], [50, 31], [60, 31],
+    [43, 46], [57, 46],
+    [44, 61], [56, 61],
+    [50, 73],
   ];
+  const scale = bottles.length > 8 ? 0.68 : bottles.length > 5 ? 0.76 : 0.84;
   $("#lakeBottles").innerHTML = bottles.map((bottle, index) => {
     const [x, y] = positions[index];
     const preview = bottle.message
@@ -610,7 +616,7 @@ function renderBottles() {
     return `<button class="bottle ${bottle.person === "boy" ? "from-boy" : "from-girl"} ${bottle.image ? "has-photo" : ""}"
       data-bottle-id="${bottle.id}"
       aria-label="Open bottle from ${escapeHtml(bottle.author)}: ${escapeHtml(preview)}"
-      style="--bottle-x:${x}%;--bottle-y:${y}%;--float-time:${3.5 + (index % 4) * 0.55}s;--float-delay:-${index * 0.43}s">
+      style="--bottle-x:${x}%;--bottle-y:${y}%;--bottle-scale:${scale};--float-time:${3.5 + (index % 4) * 0.55}s;--float-delay:-${index * 0.43}s">
       <span class="bottle-glass"><i></i></span>
       <span class="bottle-shadow"></span>
       <span class="bottle-direction" aria-hidden="true">${bottle.person === "boy" ? "←" : "→"}</span>

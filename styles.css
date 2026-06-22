@@ -384,19 +384,20 @@ button { color: inherit; }
   border: 0;
   background: transparent;
   cursor: pointer;
-  transform: rotate(-9deg);
+  transform: translateX(-50%) scale(var(--bottle-scale, .84)) rotate(-9deg);
+  transform-origin: center;
   pointer-events: auto;
   animation: bottleDriftRight var(--float-time, 4s) ease-in-out infinite;
   animation-delay: var(--float-delay, 0s);
 }
 
 @keyframes bottleDriftRight {
-  0%, 100% { transform: translate(-14px, 2px) rotate(-9deg); }
-  50% { transform: translate(14px, -5px) rotate(-2deg); }
+  0%, 100% { transform: translateX(-50%) translate(-8px, 2px) scale(var(--bottle-scale, .84)) rotate(-9deg); }
+  50% { transform: translateX(-50%) translate(8px, -4px) scale(var(--bottle-scale, .84)) rotate(-2deg); }
 }
 @keyframes bottleDriftLeft {
-  0%, 100% { transform: translate(14px, 2px) rotate(9deg); }
-  50% { transform: translate(-14px, -5px) rotate(2deg); }
+  0%, 100% { transform: translateX(-50%) translate(8px, 2px) scale(var(--bottle-scale, .84)) rotate(9deg); }
+  50% { transform: translateX(-50%) translate(-8px, -4px) scale(var(--bottle-scale, .84)) rotate(2deg); }
 }
 .bottle.from-boy { animation-name: bottleDriftLeft; }
 
@@ -899,6 +900,7 @@ body { background: #38566b; }
   .shore-status strong { font-size: 13px; }
   .status-place { max-width: 58px; font-size: 6px; letter-spacing: .05em; }
   .shore-status > span:last-child { max-width: 68px; font-size: 7px; }
+  .bottle { --bottle-scale: .62 !important; }
   .action-dock { margin-top: 6px; }
   .dock-button { justify-content: center; padding: 8px; }
   .dock-button > span:last-child { display: none; }
