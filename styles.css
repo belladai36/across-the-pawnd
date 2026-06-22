@@ -386,14 +386,19 @@ button { color: inherit; }
   cursor: pointer;
   transform: rotate(-9deg);
   pointer-events: auto;
-  animation: bottleFloat var(--float-time, 4s) ease-in-out infinite;
+  animation: bottleDriftRight var(--float-time, 4s) ease-in-out infinite;
   animation-delay: var(--float-delay, 0s);
 }
 
-@keyframes bottleFloat {
-  0%, 100% { transform: translate(-12px, 2px) rotate(-10deg); }
-  50% { transform: translate(12px, -5px) rotate(-3deg); }
+@keyframes bottleDriftRight {
+  0%, 100% { transform: translate(-14px, 2px) rotate(-9deg); }
+  50% { transform: translate(14px, -5px) rotate(-2deg); }
 }
+@keyframes bottleDriftLeft {
+  0%, 100% { transform: translate(14px, 2px) rotate(9deg); }
+  50% { transform: translate(-14px, -5px) rotate(2deg); }
+}
+.bottle.from-boy { animation-name: bottleDriftLeft; }
 
 .bottle-glass {
   position: absolute;
@@ -401,15 +406,19 @@ button { color: inherit; }
   top: 13px;
   width: 48px;
   height: 25px;
-  border: 2px solid rgba(228, 245, 226, .75);
+  border: 2px solid rgba(214, 244, 252, .9);
   border-radius: 6px 15px 15px 6px;
-  background: rgba(209, 235, 218, .38);
+  background: rgba(112, 198, 218, .34);
 }
-.bottle-glass::before { content: ""; position: absolute; left: -13px; top: 5px; width: 14px; height: 13px; border: 2px solid rgba(228,245,226,.75); border-right: 0; }
-.bottle-glass i { position: absolute; inset: 5px 9px; background: #f5e4bb; transform: rotate(2deg); }
-.bottle.from-boy .bottle-glass i { background: #d7c3ab; }
+.bottle-glass::before { content: ""; position: absolute; left: -13px; top: 5px; width: 14px; height: 13px; border: 2px solid rgba(214,244,252,.9); border-right: 0; }
+.bottle-glass i { position: absolute; inset: 5px 9px; background: #d7f0f5; transform: rotate(2deg); }
+.bottle.from-boy .bottle-glass { border-color: rgba(188,211,235,.92); background: rgba(39,78,126,.38); transform: scaleX(-1); }
+.bottle.from-boy .bottle-glass::before { border-color: rgba(188,211,235,.92); border-right: 0; }
+.bottle.from-boy .bottle-glass i { background: #b7cbe1; }
 .bottle.has-photo .bottle-glass i::after { content: "▣"; position: absolute; inset: -3px 0 0; color: #8c765f; font-size: 9px; text-align: center; }
 .bottle-shadow { position: absolute; left: 17px; top: 43px; width: 51px; height: 5px; border-radius: 50%; background: rgba(51,92,89,.25); filter: blur(2px); }
+.bottle-direction { position: absolute; top: 0; left: 50%; min-width: 22px; border-radius: 20px; padding: 2px 5px; background: #d7f0f5; color: #17617c; font: 700 10px/1 "DM Sans",sans-serif; box-shadow: 0 3px 8px rgba(20,61,83,.16); transform: translateX(-50%); }
+.bottle.from-boy .bottle-direction { background: #294f78; color: #e8f1fa; }
 .bottle:hover { filter: brightness(1.12); }
 .empty-lake-note { position: absolute; z-index: 4; top: 47%; left: 50%; margin: 0; color: rgba(239,247,232,.6); font: italic 11px "DM Serif Display", serif; transform: translate(-50%,-50%); }
 
@@ -700,6 +709,153 @@ blockquote { margin: 25px 3px 15px; color: #485b54; font: italic 23px/1.45 "DM S
 .tutorial-dots i { width: 7px; height: 7px; border-radius: 50%; background: #d4d3c7; transition: .25s ease; }
 .tutorial-dots i.active { width: 20px; border-radius: 7px; background: var(--terracotta); }
 .tutorial-actions { display: flex; justify-content: center; gap: 10px; }
+
+/* Atlantic field-notes palette: mineral blues, fogged glass, and ink. */
+:root {
+  --ink: #102b3d;
+  --muted: #61798a;
+  --cream: #eaf1f3;
+  --paper: #f6f8f7;
+  --terracotta: #315f7a;
+  --terracotta-dark: #173e58;
+  --sage: #64869a;
+  --water: #82afc0;
+  --water-dark: #426f89;
+  --sky: #cadce5;
+  --shadow: 0 18px 55px rgba(16, 43, 61, .18);
+}
+body { background: #38566b; }
+.auth-world {
+  background:
+    radial-gradient(circle at 18% 17%, rgba(151,191,207,.42), transparent 27%),
+    radial-gradient(circle at 83% 78%, rgba(50,91,119,.32), transparent 31%),
+    linear-gradient(145deg,#0f2e45,#426b82 54%,#9bb7c5);
+}
+.auth-glow { background: radial-gradient(circle,rgba(203,226,233,.44),transparent 68%); }
+.auth-card, .daily-card, .action-dock, .modal, .tutorial-card {
+  border-color: rgba(34,75,101,.18);
+  background: rgba(246,248,247,.94);
+  box-shadow: 0 25px 75px rgba(10,39,59,.22);
+}
+.auth-paws, .daily-icon, .dock-icon, .modal-symbol, .instruction-icon {
+  background: #d9e7ec;
+  color: #234e69;
+}
+.auth-tabs { background: #dbe5e8; }
+.auth-tabs button { color: #627987; }
+.auth-tabs button.active { color: #14394f; }
+.auth-form label, .settings-block label { color: #536e7e; }
+.auth-form input, .settings-block input, .field-row input, .field-row select,
+.identity-setup-form input, .daily-reset-setting select, .modal textarea {
+  border-color: #b9cbd3;
+  background: #f3f7f7;
+}
+.auth-form input:focus, .modal textarea:focus, .modal input:focus, .modal select:focus {
+  border-color: #4f7c96;
+  box-shadow: 0 0 0 3px rgba(79,124,150,.15);
+}
+.auth-error { background: #eadfdc; color: #8d4c45 !important; }
+.world {
+  background:
+    linear-gradient(180deg,#b9d0dc 0%,#dbe7eb 43%,#7695a6 70%,#38566b 100%);
+}
+.sky-glow { background: radial-gradient(circle,rgba(223,238,242,.82),transparent 66%); }
+.brand h1 { color: #102f43; }
+.eyebrow, .music-label { color: #567487; }
+.round-button, .heart-wallet, .identity-button {
+  border-color: rgba(24,65,91,.25);
+  background: rgba(237,244,246,.55);
+  color: #254b63;
+}
+.heart-wallet { color: #315f7a; }
+.round-button:hover, .identity-button:hover { background: rgba(246,249,249,.9); }
+.daily-card { background: rgba(245,248,248,.91); }
+.star-jar-button { background: #dce8eb; }
+.star-jar-button:hover { background: #cedde2; }
+.star-jar-button strong { color: #244d66; }
+.star-jar-button small, .reset-clock { color: #6b8290; }
+.mini-jar { border-color: #52778c; border-top-color: #31566d; background: rgba(157,199,211,.3); }
+.mini-jar-stars i, .jar-stars i { color: #5f91aa; }
+.jar-stars i:nth-child(3n) { color: #315f7a; }
+.jar-stars i:nth-child(4n) { color: #8bb5c5; }
+.together-mark, .partner-progress span.done { background: #d6e7ed; color: #315f73; }
+.secondary-button { border-color: #afc3cc; background: #edf3f4; color: #36566a; }
+.secondary-button:hover { border-color: #527c93; background: #e1ecef; }
+.distant-hills { background: #819cab; }
+.shore { background: #657f8e; }
+.shore::before { background: #8da5b0; }
+.house-body { background: #d7e1e1; }
+.roof { background: #31546d; }
+.chimney, .door { background: #203e54; }
+.window { background: #83bed0; border-color: #dcebee; }
+.flowers { color: #b9d7e2; }
+.water {
+  background:
+    repeating-radial-gradient(ellipse at 50% 0,transparent 0 35px,rgba(225,242,246,.17) 36px 38px,transparent 39px 64px),
+    linear-gradient(180deg,#8ab7c6,#47758e);
+}
+.water::before { background: linear-gradient(100deg,rgba(255,255,255,.14),transparent 35%,rgba(187,221,231,.18) 50%,transparent 68%); }
+.lily { background: #2f6372; }
+.shore-status { border-color: rgba(219,237,243,.36); background: rgba(19,48,68,.76); }
+.dog-name { background: rgba(238,245,246,.88); color: #173d54; }
+.action-dock { background: rgba(245,248,248,.95); }
+.dock-button:hover { background: #e2ecef; }
+.dock-button strong { color: #173b51; }
+.dock-button small { color: #718894; }
+.bottle-icon { color: #357a96; }
+.pebble-icon { color: #55788d; }
+.dock-divider { background: #cad8dd; }
+.footer-note { color: rgba(225,238,242,.85); }
+.modal::backdrop { background: rgba(10,35,52,.52); }
+.task-meta span, .task-tool-guidance, .task-hint, .answer-reveal {
+  border-color: #c6d7dd;
+  background: #e5eef1;
+  color: #526f80 !important;
+}
+#taskCanvas { border-color: #b8cdd5; background: #f4f8f8; }
+.progress-track { background: #dbe5e8; }
+.progress-track i { background: linear-gradient(90deg,#224e6a,#7da9bb); }
+.journey-day { background: #e4ecee; color: #7a8d97; }
+.journey-day.done { background: #cedfe5; color: #36566a; }
+.journey-day.current { outline-color: #315f7a; background: #edf4f5; color: #173c54; }
+.manual-time-box { border-color: #b8ccd5; background: #e8f0f2; }
+.instruction-steps article, .identity-choices button, .shop-item, .mood-grid button {
+  border-color: #cad9de;
+  background: #edf3f4;
+}
+.instruction-steps strong { color: #173c53; }
+.identity-choices button:hover, .shop-item:hover { border-color: #668da2; }
+.identity-choices button.selected, .shop-item.selected {
+  border-color: #315f7a;
+  background: #dce9ed;
+  outline: 2px solid #315f7a;
+  box-shadow: 0 0 0 2px rgba(49,95,122,.12);
+}
+.identity-choices button:focus-visible, .shop-item:focus-visible {
+  outline: 2px solid #315f7a;
+  outline-offset: 2px;
+}
+.room-wallet { background: #d9e8ed; color: #315f7a; }
+.tiny-room { border-color: #27485d; background: #cedde2; }
+.room-wall { background: linear-gradient(90deg,rgba(255,255,255,.16) 50%,transparent 50%),#c7d9df; }
+.room-floor { background: repeating-linear-gradient(90deg,#54758a 0 55px,#42677e 56px 58px); }
+.toast { background: #102f43; color: #edf5f7; box-shadow: 0 10px 30px rgba(7,31,47,.28); }
+.tutorial-overlay {
+  background:
+    radial-gradient(circle at 20% 20%,rgba(166,201,214,.42),transparent 28%),
+    radial-gradient(circle at 80% 80%,rgba(29,68,94,.32),transparent 32%),
+    linear-gradient(150deg,#173d57,#527b91 52%,#a8c1cc);
+}
+.tutorial-star { color: rgba(198,226,235,.92); }
+.tutorial-card { background: rgba(243,247,247,.96); }
+.tutorial-visual { background: #d7e6eb; color: #244f69; }
+.two-shores i { color: #4d839a; }
+.tutorial-task span { color: #456f86; }
+.tutorial-bottles { color: #346c86; }
+.tutorial-home { background: #cbdde3; }
+.tutorial-music { background: #dce8eb; }
+.tutorial-dots i { background: #b8cbd2; }
+.tutorial-dots i.active { background: #315f7a; }
 
 .paw-burst {
   position: fixed;

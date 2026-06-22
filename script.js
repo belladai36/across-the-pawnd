@@ -205,6 +205,14 @@ function identityClaimToken(person = identity) {
   return token;
 }
 
+async function findCity(city, region) {
+  const params = new URLSearchParams({ city, region });
+  const response = await fetch(`/api/geocode?${params}`, { cache: "no-store" });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "City lookup failed");
+  return result.match || null;
+}
+
 function showAuth(error = "") {
   $("#authWorld").hidden = false;
   $("#world").hidden = true;
@@ -384,17 +392,17 @@ function prepareTaskCanvas(savedDrawing = "", readOnly = false) {
   if (canvasTaskIndex === currentIndex && drawingChanged) return;
   canvasTaskIndex = currentIndex;
   drawingChanged = false;
-  context.fillStyle = "#fffdf7";
+  context.fillStyle = "#f4f8f8";
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.lineCap = "round";
   context.lineJoin = "round";
   context.lineWidth = 6;
-  context.strokeStyle = "#4f625a";
+  context.strokeStyle = "#315f7a";
 
   if (savedDrawing) {
     const image = new Image();
     image.onload = () => {
-      context.fillStyle = "#fffdf7";
+      context.fillStyle = "#f4f8f8";
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
     };
@@ -447,9 +455,9 @@ function canvasPoint(event) {
 
   $("#clearDrawing").addEventListener("click", () => {
     if (canvasReadOnly) return;
-    context.fillStyle = "#fffdf7";
+    context.fillStyle = "#f4f8f8";
     context.fillRect(0, 0, canvas.width, canvas.height);
-    context.strokeStyle = "#4f625a";
+    context.strokeStyle = "#315f7a";
     drawingChanged = false;
   });
 }
@@ -605,6 +613,7 @@ function renderBottles() {
       style="--bottle-x:${x}%;--bottle-y:${y}%;--float-time:${3.5 + (index % 4) * 0.55}s;--float-delay:-${index * 0.43}s">
       <span class="bottle-glass"><i></i></span>
       <span class="bottle-shadow"></span>
+      <span class="bottle-direction" aria-hidden="true">${bottle.person === "boy" ? "←" : "→"}</span>
     </button>`;
   }).join("");
   $("#emptyLakeNote").hidden = bottles.length > 0;
@@ -847,17 +856,7 @@ $("#identitySetupForm").addEventListener("submit", async (event) => {
 
   let match;
   try {
-    const query = encodeURIComponent([city, region].join(", "));
-    const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=10&language=en&format=json`);
-    if (!response.ok) throw new Error("City lookup failed");
-    const result = await response.json();
-    const matches = result.results || [];
-    const normalizedRegion = region.toLowerCase();
-    match = matches.find((candidate) =>
-      candidate.country?.toLowerCase().includes(normalizedRegion) ||
-      candidate.admin1?.toLowerCase().includes(normalizedRegion) ||
-      candidate.country_code?.toLowerCase() === normalizedRegion
-    ) || matches[0];
+    match = await findCity(city, region);
     if (!match) {
       $("#identityManualTimeBox").hidden = false;
       const local = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
@@ -1042,17 +1041,7 @@ $("#saveProfile").addEventListener("click", async () => {
   const region = $("#profileRegionInput").value.trim();
   if (!name || !city) return showToast("Give your pup a name and city first.");
   try {
-    const query = encodeURIComponent([city, region].filter(Boolean).join(", "));
-    const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=10&language=en&format=json`);
-    const result = await response.json();
-    const matches = result.results || [];
-    const normalizedRegion = region.toLowerCase();
-    const match = matches.find((candidate) =>
-      !normalizedRegion ||
-      candidate.country?.toLowerCase().includes(normalizedRegion) ||
-      candidate.admin1?.toLowerCase().includes(normalizedRegion) ||
-      candidate.country_code?.toLowerCase() === normalizedRegion
-    ) || matches[0];
+    const match = await findCity(city, region);
     if (!match) {
       $("#manualTimeBox").hidden = false;
       if (!$("#manualLocalTime").value) {
@@ -1278,12 +1267,9 @@ const weatherLabels = {
 
 async function fetchWeather(latitude, longitude, timezone, unit) {
   const params = new URLSearchParams({
-    latitude, longitude,
-    current: "temperature_2m,weather_code,is_day",
-    temperature_unit: unit,
-    timezone,
+    latitude, longitude, timezone, unit,
   });
-  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+  const response = await fetch(`/api/weather?${params}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Weather unavailable");
   return response.json();
 }

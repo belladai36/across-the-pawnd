@@ -10,7 +10,8 @@ import threading
 from datetime import datetime, timezone, timedelta
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, quote, urlparse
+from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent
@@ -64,6 +65,51 @@ DEFAULT_STATE = {
 
 def shared_date():
     return datetime.now(timezone.utc).date().isoformat()
+
+
+def fetch_public_json(url):
+    request = Request(url, headers={"User-Agent": "Across-the-Pawnd/1.0"})
+    with urlopen(request, timeout=10) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def normalized_place(value):
+    return re.sub(r"[^a-z0-9\u0080-\uffff]+", "", str(value).casefold())
+
+
+def geocode_place(city, region):
+    city = str(city).strip()[:80]
+    region = str(region).strip()[:80]
+    if not city:
+        raise ValueError("Enter a city")
+    search_city = re.sub(r"[\W_]+", " ", city, flags=re.UNICODE).strip() or city
+    url = (
+        "https://geocoding-api.open-meteo.com/v1/search"
+        f"?name={quote(search_city)}&count=20&language=en&format=json"
+    )
+    candidates = fetch_public_json(url).get("results", [])
+    if not candidates:
+        return None
+    wanted_region = normalized_place(region)
+    wanted_city = normalized_place(city)
+
+    def score(candidate):
+        candidate_city = normalized_place(candidate.get("name", ""))
+        country = normalized_place(candidate.get("country", ""))
+        admin = normalized_place(candidate.get("admin1", ""))
+        country_code = normalized_place(candidate.get("country_code", ""))
+        points = 8 if candidate_city == wanted_city else 0
+        if not points and (wanted_city in candidate_city or candidate_city in wanted_city):
+            points += 4
+        if wanted_region:
+            if wanted_region in (country, admin, country_code):
+                points += 8
+            elif wanted_region in country or wanted_region in admin:
+                points += 5
+        points += min(int(candidate.get("population") or 0) // 1_000_000, 3)
+        return points
+
+    return max(candidates, key=score)
 
 def profile_now(state, person):
     profile = state["profiles"].get(person, {})
@@ -305,7 +351,8 @@ class PawndHandler(SimpleHTTPRequestHandler):
         return state
 
     def do_GET(self):
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         if path == "/api/session":
             room_code = self.authenticated_room()
             if not room_code:
@@ -326,6 +373,39 @@ class PawndHandler(SimpleHTTPRequestHandler):
             with LOCK:
                 state = self.state_response(room_code)
             self.send_json(200, state)
+            return
+        if path == "/api/geocode":
+            if not self.authenticated_room():
+                self.send_json(401, {"error": "Please enter your private Pawnd"})
+                return
+            query = parse_qs(parsed.query)
+            try:
+                match = geocode_place(
+                    query.get("city", [""])[0],
+                    query.get("region", [""])[0],
+                )
+                self.send_json(200, {"match": match})
+            except Exception:
+                self.send_json(502, {"error": "City lookup is temporarily unavailable"})
+            return
+        if path == "/api/weather":
+            if not self.authenticated_room():
+                self.send_json(401, {"error": "Please enter your private Pawnd"})
+                return
+            query = parse_qs(parsed.query)
+            try:
+                latitude = float(query.get("latitude", [""])[0])
+                longitude = float(query.get("longitude", [""])[0])
+                timezone_name = query.get("timezone", ["UTC"])[0][:80]
+                url = (
+                    "https://api.open-meteo.com/v1/forecast"
+                    f"?latitude={latitude}&longitude={longitude}"
+                    "&current=temperature_2m,weather_code,is_day"
+                    f"&timezone={quote(timezone_name)}&temperature_unit=celsius"
+                )
+                self.send_json(200, fetch_public_json(url))
+            except Exception:
+                self.send_json(502, {"error": "Weather is temporarily unavailable"})
             return
         if path in ("/shared-state.json", "/server.py") or path.startswith("/."):
             self.send_error(404)
