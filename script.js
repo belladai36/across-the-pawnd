@@ -180,6 +180,7 @@ const shoreWeather = {
   girl: { code: 0, isDay: 1 },
   boy: { code: 0, isDay: 1 },
 };
+const weatherLocationCache = new Map();
 
 $("#dateLabel").textContent = today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
@@ -1301,21 +1302,49 @@ async function fetchWeather(latitude, longitude, timezone, unit) {
   return response.json();
 }
 
+async function weatherLocation(profile) {
+  if (
+    profile.timeMode !== "manual"
+    && profile.latitude != null
+    && profile.longitude != null
+  ) {
+    return profile;
+  }
+  const key = `${profile.city || ""}|${profile.country || ""}`.toLowerCase();
+  if (!key.replace("|", "").trim()) return null;
+  if (!weatherLocationCache.has(key)) {
+    const lookup = findCity(profile.city || "", profile.country || "")
+      .catch((error) => {
+        weatherLocationCache.delete(key);
+        throw error;
+      });
+    weatherLocationCache.set(key, lookup);
+  }
+  return weatherLocationCache.get(key);
+}
+
 async function updateWeather() {
   await Promise.all(["girl", "boy"].map(async (person) => {
     const profile = sharedState.profiles[person];
-    if (profile.timeMode === "manual" || profile.latitude == null || profile.longitude == null) {
-      $(`#${person}Weather`).textContent = "Manual local time · weather unavailable";
-      const hour = profileLocalHour(profile);
-      shoreWeather[person] = { code: 0, isDay: hour >= 6 && hour < 20 ? 1 : 0 };
-      $(`.shore-${person === "girl" ? "left" : "right"}`).classList.toggle("night-shore", shoreWeather[person].isDay === 0);
-      return;
-    }
     try {
-      const weather = await fetchWeather(profile.latitude, profile.longitude, profile.timezone, "celsius");
+      const location = await weatherLocation(profile);
+      if (location?.latitude == null || location?.longitude == null) {
+        throw new Error("Location unavailable");
+      }
+      const weather = await fetchWeather(
+        location.latitude,
+        location.longitude,
+        location.timezone || "UTC",
+        "celsius",
+      );
       paintWeather(person, weather, "°C");
     } catch {
-      $(`#${person}Weather`).textContent = "Weather resting";
+      $(`#${person}Weather`).textContent =
+        profile.timeMode === "manual" ? "Manual time · weather resting" : "Weather resting";
+      const hour = profileLocalHour(profile);
+      shoreWeather[person] = { code: 0, isDay: hour >= 6 && hour < 20 ? 1 : 0 };
+      $(`.shore-${person === "girl" ? "left" : "right"}`)
+        .classList.toggle("night-shore", shoreWeather[person].isDay === 0);
     }
   }));
   adaptiveMusic.updateScene();
