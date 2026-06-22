@@ -591,8 +591,8 @@ function sentTodayBy(person) {
 function renderBottles() {
   const bottles = bottlesInLake();
   const positions = [
-    [45, 29], [55, 54], [35, 64], [64, 25], [49, 75],
-    [26, 40], [73, 60], [40, 47], [60, 72], [52, 37],
+    [45, 25], [55, 48], [35, 60], [64, 22], [49, 65],
+    [26, 36], [73, 56], [40, 43], [60, 63], [52, 33],
   ];
   $("#lakeBottles").innerHTML = bottles.map((bottle, index) => {
     const [x, y] = positions[index];

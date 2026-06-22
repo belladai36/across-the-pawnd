@@ -448,7 +448,7 @@ button { color: inherit; }
   justify-content: center;
   width: min(700px, 95vw);
   min-height: 70px;
-  margin: -53px auto 0;
+  margin: 8px auto 0;
   padding: 8px;
   border: 1px solid rgba(76, 99, 88, .16);
   border-radius: 18px;
@@ -743,7 +743,7 @@ blockquote { margin: 25px 3px 15px; color: #485b54; font: italic 23px/1.45 "DM S
   .shore-status strong { font-size: 13px; }
   .status-place { max-width: 58px; font-size: 6px; letter-spacing: .05em; }
   .shore-status > span:last-child { max-width: 68px; font-size: 7px; }
-  .action-dock { margin-top: -43px; }
+  .action-dock { margin-top: 6px; }
   .dock-button { justify-content: center; padding: 8px; }
   .dock-button > span:last-child { display: none; }
   .dock-divider { margin: 9px 3px; }
