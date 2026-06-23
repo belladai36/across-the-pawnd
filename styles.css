@@ -586,6 +586,59 @@ button { color: inherit; }
 .partner-progress { display: flex; justify-content: center; gap: 8px; margin: -3px 0 14px; }
 .partner-progress span { border-radius: 20px; padding: 5px 9px; background: #efede4; color: #99958b; font-size: 9px; }
 .partner-progress span.done { background: #e5edd8; color: #66765f; }
+.shared-answers {
+  margin: 12px 0 14px;
+  border: 2px solid #557b91;
+  border-radius: 17px 21px 15px 19px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 13px 13px, rgba(91,137,159,.06) 0 1px, transparent 1.5px),
+    #f6f8f7;
+  background-size: 17px 17px;
+  box-shadow: 2px 3px 0 rgba(24,63,89,.09);
+}
+.shared-answer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.shared-answer-card {
+  min-width: 0;
+  border: 2px solid #b8ccd5;
+  border-radius: 14px 18px 13px 17px;
+  padding: 10px;
+  background: #edf4f5;
+  color: #173c53;
+}
+.shared-answer-card.partner { background: #dfe9f3; }
+.shared-answer-card.waiting, .shared-answer-card.locked {
+  border-style: dashed;
+  color: #61798a;
+  background: #eef3f4;
+}
+.shared-answer-card strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #173c53;
+  font: 400 19px/1 "Patrick Hand", "Comic Sans MS", cursive;
+}
+.shared-answer-card p {
+  margin: 0;
+  color: #4d6b7e;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.shared-answer-card .quiet-answer { font-style: italic; }
+.shared-drawing {
+  display: block;
+  width: 100%;
+  margin: 0 0 8px;
+  border: 2px solid #557b91;
+  border-radius: 12px 15px 11px 14px;
+  background: #f4f8f8;
+}
 .task-meta span { padding: 5px 9px; border-radius: 20px; background: #efeddf; color: #7c897e; font-size: 9px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .task-tool-guidance { margin: 10px 0 0 !important; border-radius: 10px; padding: 9px 11px; background: #eef0df; color: #69796e !important; font-size: 10px !important; }
 .drawing-board { margin: 13px 0; }
@@ -1437,6 +1490,7 @@ body, button, textarea, input, select {
   .instruction-steps article:last-child { grid-column: auto; }
   .modal { width: calc(100vw - 20px); padding: 30px 20px 24px; }
   .modal h2 { font-size: 31px; }
+  .shared-answer-grid { grid-template-columns: 1fr; }
   .room-heading { display: block; padding-right: 42px; }
   .room-wallet { display: inline-flex; margin-top: 8px; }
   .tutorial-card { min-height: 0; padding: 28px 20px 22px; }

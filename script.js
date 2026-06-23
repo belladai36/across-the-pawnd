@@ -451,6 +451,7 @@ function renderTask() {
   $("#partnerProgress [data-person='boy']").textContent = `${submissions.boy ? "●" : "○"} ${sharedState.profiles.boy.name}`;
   $("#partnerProgress [data-person='girl']").classList.toggle("done", Boolean(submissions.girl));
   $("#partnerProgress [data-person='boy']").classList.toggle("done", Boolean(submissions.boy));
+  renderSharedAnswers(submissions, drawingTask, mineDone);
   $("#answerReveal").hidden = !mineDone;
   $("#correctAnswer").textContent = answer;
   $("#adventureButton").innerHTML = finishedAll
@@ -459,7 +460,45 @@ function renderTask() {
       ? "See today’s star <span>✦</span>"
       : mineDone
         ? "Waiting across the water <span>♡</span>"
-        : "Let’s do it <span>→</span>";
+    : "Let’s do it <span>→</span>";
+}
+
+function renderSharedAnswers(submissions, drawingTask, unlocked) {
+  const hasAnySubmission = Boolean(submissions.girl || submissions.boy);
+  $("#sharedAnswers").hidden = !hasAnySubmission || !identity;
+  if ($("#sharedAnswers").hidden) {
+    $("#sharedAnswerGrid").innerHTML = "";
+    return;
+  }
+  $("#sharedAnswerGrid").innerHTML = ["girl", "boy"].map((person) => {
+    const profile = sharedState.profiles[person];
+    const submission = submissions[person];
+    const isMine = person === identity;
+    const canView = Boolean(submission && (unlocked || isMine));
+    if (!submission) {
+      return `<article class="shared-answer-card waiting">
+        <strong>${escapeHtml(profile.name)}</strong>
+        <p>Waiting for this shore’s answer.</p>
+      </article>`;
+    }
+    if (!canView) {
+      return `<article class="shared-answer-card locked">
+        <strong>${escapeHtml(profile.name)}</strong>
+        <p>Send your half to unlock your partner’s answer.</p>
+      </article>`;
+    }
+    const drawing = drawingTask && submission.drawing
+      ? `<img class="shared-drawing" src="${escapeHtml(submission.drawing)}" alt="${escapeHtml(profile.name)}’s drawing for today" />`
+      : "";
+    const note = submission.note
+      ? `<p>${escapeHtml(submission.note)}</p>`
+      : `<p class="quiet-answer">No written note, just the finished ${drawingTask ? "drawing" : "task"}.</p>`;
+    return `<article class="shared-answer-card ${isMine ? "mine" : "partner"}">
+      <strong>${escapeHtml(profile.name)}${isMine ? " · you" : ""}</strong>
+      ${drawing}
+      ${note}
+    </article>`;
+  }).join("");
 }
 
 function prepareTaskCanvas(savedDrawing = "", readOnly = false) {
