@@ -711,6 +711,75 @@ function renderBottles() {
   $("#bottleLimit").classList.toggle("at-limit", used >= 5);
   $("#sendBottle").disabled = used >= 5;
   $("#sendBottle").textContent = used >= 5 ? "The lake will welcome more tomorrow" : "Push it into the pawnd";
+  renderBottleArchive();
+}
+
+function bottleSentDate(bottle) {
+  return bottle.pawndDate || bottle.sentDate || "";
+}
+
+function bottleTimeLabel(bottle) {
+  const profile = sharedState.profiles[bottle.person] || {};
+  const sentTime = parseStoredInstant(bottle.sentAt);
+  return Number.isFinite(sentTime.getTime())
+    ? formatProfileTime(profile, sentTime)
+    : "";
+}
+
+function bottleDateLabel(dateText) {
+  if (!dateText) return "Undated bottles";
+  const parsed = new Date(`${dateText}T12:00:00Z`);
+  if (!Number.isFinite(parsed.getTime())) return dateText;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long", day: "numeric", year: "numeric",
+  }).format(parsed);
+}
+
+function bottlePreview(bottle) {
+  if (bottle.message) return bottle.message.slice(0, 84);
+  return bottle.image ? "A photo bottle" : "A quiet bottle";
+}
+
+function renderBottleArchive() {
+  const bottles = [...(sharedState.bottles || [])].sort((a, b) => (
+    parseStoredInstant(b.sentAt).getTime() || 0
+  ) - (
+    parseStoredInstant(a.sentAt).getTime() || 0
+  ));
+  $("#archiveSummary").textContent = bottles.length
+    ? `${bottles.length} bottle${bottles.length === 1 ? "" : "s"} saved across the pawnd.`
+    : "No bottles saved yet.";
+  if (!bottles.length) {
+    $("#bottleArchive").innerHTML = `<p class="empty-archive">Send a bottle and it will live here after the lake changes.</p>`;
+    return;
+  }
+  const groups = new Map();
+  for (const bottle of bottles) {
+    const date = bottleSentDate(bottle) || "undated";
+    if (!groups.has(date)) groups.set(date, []);
+    groups.get(date).push(bottle);
+  }
+  $("#bottleArchive").innerHTML = [...groups.entries()].map(([date, items]) => `
+    <section class="archive-day">
+      <h3>${escapeHtml(bottleDateLabel(date === "undated" ? "" : date))}</h3>
+      <div class="archive-list">
+        ${items.map((bottle) => {
+          const profile = sharedState.profiles[bottle.person] || {};
+          const direction = bottle.person === "boy" ? "←" : "→";
+          const time = bottleTimeLabel(bottle);
+          return `<button class="archive-bottle ${bottle.person === "boy" ? "from-boy" : "from-girl"}"
+            data-archive-bottle-id="${bottle.id}">
+            <span class="archive-bottle-icon">${direction}</span>
+            <span>
+              <strong>${escapeHtml(bottle.author || profile.name || "A pup")}${bottle.image ? " · photo" : ""}</strong>
+              <small>${escapeHtml(profile.city || "Their shore")}${time ? ` · ${escapeHtml(time)}` : ""}</small>
+              <em>${escapeHtml(bottlePreview(bottle))}</em>
+            </span>
+          </button>`;
+        }).join("")}
+      </div>
+    </section>
+  `).join("");
 }
 
 function formatResetCountdown(iso) {
@@ -1019,6 +1088,19 @@ $("#messageButton").addEventListener("click", () => {
   $("#bottleAuthor").value = sharedState.profiles[identity].name;
   openModal("#messageModal");
 });
+$("#openBottleArchive").addEventListener("click", () => {
+  renderBottleArchive();
+  openModal("#archiveModal");
+});
+$("#archiveDockButton").addEventListener("click", () => {
+  renderBottleArchive();
+  openModal("#archiveModal");
+});
+$("#readArchiveButton").addEventListener("click", () => {
+  closeModal($("#readModal"));
+  renderBottleArchive();
+  openModal("#archiveModal");
+});
 $("#helpButton").addEventListener("click", () => openModal("#helpModal"));
 $("#hintButton").addEventListener("click", () => {
   $("#taskHint").hidden = false;
@@ -1137,11 +1219,9 @@ $("#sendBottle").addEventListener("click", async () => {
   }
 });
 
-$("#lakeBottles").addEventListener("click", (event) => {
-  const button = event.target.closest("[data-bottle-id]");
-  if (!button) return;
+function openBottle(bottleRef) {
   const bottle = sharedState.bottles.find(
-    (candidate) => String(candidate.id) === button.dataset.bottleId,
+    (candidate) => String(candidate.id) === String(bottleRef?.id ?? bottleRef),
   );
   if (!bottle) return showToast("That bottle drifted out of reach.");
   $("#bottleText").textContent = bottle.message
@@ -1157,6 +1237,19 @@ $("#lakeBottles").addEventListener("click", (event) => {
   $("#bottlePhoto").hidden = !bottle.image;
   if (bottle.image) $("#bottlePhoto").src = bottle.image;
   openModal("#readModal");
+}
+
+$("#lakeBottles").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-bottle-id]");
+  if (!button) return;
+  openBottle(button.dataset.bottleId);
+});
+
+$("#bottleArchive").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-archive-bottle-id]");
+  if (!button) return;
+  closeModal($("#archiveModal"));
+  openBottle(button.dataset.archiveBottleId);
 });
 
 $("#saveProfile").addEventListener("click", async () => {

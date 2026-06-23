@@ -705,7 +705,6 @@ class PawndHandler(SimpleHTTPRequestHandler):
                 "sentDate": sent_date,
                 "pawndDate": sent_date,
             })
-            state["bottles"] = state["bottles"][-100:]
             state["economy"]["hearts"] += 1
         elif kind == "claimProfile":
             person = action.get("person")

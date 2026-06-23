@@ -173,6 +173,11 @@
           <span><strong>Send a Bottle</strong><small>Leave something across</small></span>
         </button>
         <span class="dock-divider"></span>
+        <button class="dock-button" id="archiveDockButton">
+          <span class="dock-icon archive-icon" aria-hidden="true">⚱</span>
+          <span><strong>Bottle Archive</strong><small>Browse saved bottles</small></span>
+        </button>
+        <span class="dock-divider"></span>
         <button class="dock-button" id="roomDockButton">
           <span class="dock-icon pebble-icon" aria-hidden="true">⌂</span>
           <span><strong>Our Little Room</strong><small>Build a home together</small></span>
@@ -250,6 +255,7 @@
       <p>Your note will bob gently on the water, waiting to be found.</p>
       <div class="bottle-limit" id="bottleLimit">0 of 5 bottles sent today</div>
       <p class="bottle-reset-note" id="bottleResetClock">Resets at 12:00 AM on your shore</p>
+      <button class="archive-link" id="openBottleArchive" type="button">Open the bottle archive</button>
       <textarea id="bottleMessage" maxlength="300" placeholder="A little note for you…"></textarea>
       <label class="photo-picker">
         <input id="bottleImage" type="file" accept="image/*" />
@@ -282,6 +288,17 @@
       <blockquote id="bottleText">No bottles are floating here yet.</blockquote>
       <img class="bottle-photo" id="bottlePhoto" alt="Photo sent in this bottle" hidden />
       <p class="letter-signature" id="bottleSignature"></p>
+      <button class="secondary-button full-button" id="readArchiveButton" type="button">Browse past bottles</button>
+    </dialog>
+
+    <dialog class="modal archive-modal" id="archiveModal">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <span class="modal-symbol">⚱</span>
+      <span class="eyebrow">BOTTLE ARCHIVE</span>
+      <h2>Every bottle you have found</h2>
+      <p>A little shelf for notes and photos after they drift away from today’s lake.</p>
+      <div class="archive-summary" id="archiveSummary">No bottles saved yet.</div>
+      <div class="bottle-archive" id="bottleArchive"></div>
     </dialog>
 
     <dialog class="modal instructions-modal" id="helpModal">
@@ -343,9 +360,10 @@
           <span class="instruction-icon">✉</span>
           <div>
             <strong>Send something across</strong>
-            <p>Each pup may send up to five note or photo bottles per local day. They float
-              visibly in the lake, and either pup can open any bottle. Each pup’s allowance
-              resets at 12:00 AM on their own shore.</p>
+            <p>Each pup may send up to five note or photo bottles per shared Pawnd day.
+              Today’s bottles float visibly in the lake; after the water refreshes, every
+              bottle stays browsable in the archive. The allowance resets at 12:00 AM on
+              the shore chosen as your shared Pawnd clock.</p>
           </div>
         </article>
         <article>

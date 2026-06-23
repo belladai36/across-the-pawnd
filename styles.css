@@ -544,6 +544,7 @@ button { color: inherit; }
 .dock-button small { display: block; margin-top: 2px; color: #859089; font-size: 9px; white-space: nowrap; }
 .dock-icon { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; background: #e9edd8; font-size: 16px; }
 .bottle-icon { color: #568184; transform: rotate(12deg); }
+.archive-icon { color: #315f7a; transform: rotate(-7deg); }
 .pebble-icon { color: #c17c63; font-size: 18px; }
 .dock-divider { width: 1px; margin: 10px 0; background: #e2ded1; }
 
@@ -657,11 +658,100 @@ blockquote { margin: 25px 3px 15px; color: #485b54; font: italic 23px/1.45 "DM S
 .bottle-limit { width: fit-content; margin: 10px 0 0; border-radius: 20px; padding: 6px 10px; background: #edf0df; color: #71806e; font-size: 10px; }
 .bottle-limit.at-limit { background: #f2dfd8; color: #a45e52; }
 .bottle-reset-note { margin: 4px 0 8px !important; font: italic 10px "DM Serif Display",serif; }
+.archive-link {
+  border: 0;
+  border-bottom: 2px solid #5b8094;
+  margin: 2px 0 12px;
+  padding: 0 2px 2px;
+  background: transparent;
+  color: #234e69;
+  cursor: pointer;
+  font: 600 11px "Mali", "Comic Sans MS", cursive;
+}
 .photo-picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .image-preview { position: relative; width: fit-content; margin: 0 0 13px; }
 .image-preview img { display: block; max-width: 100%; max-height: 160px; border-radius: 11px; }
 .image-preview button { position: absolute; top: 5px; right: 5px; width: 25px; height: 25px; border: 0; border-radius: 50%; background: rgba(45,55,51,.75); color: white; cursor: pointer; }
 .bottle-photo { display: block; max-width: 100%; max-height: 280px; margin: 15px auto; border-radius: 14px; box-shadow: 0 10px 30px rgba(50,65,57,.15); }
+.archive-modal { width: min(680px, calc(100vw - 26px)); }
+.archive-summary {
+  width: fit-content;
+  margin: 12px 0 14px;
+  border: 2px solid #557b91;
+  border-radius: 17px 13px 18px 12px;
+  padding: 7px 11px;
+  background: #e6f0f3;
+  color: #345b72;
+  font-size: 11px;
+}
+.bottle-archive {
+  display: grid;
+  gap: 14px;
+  max-height: min(52vh, 520px);
+  overflow: auto;
+  padding: 3px 6px 3px 0;
+}
+.archive-day {
+  border: 2px solid #557b91;
+  border-radius: 17px 21px 15px 19px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 13px 13px, rgba(91,137,159,.06) 0 1px, transparent 1.5px),
+    #f6f8f7;
+  background-size: 17px 17px;
+  box-shadow: 2px 3px 0 rgba(24,63,89,.09);
+}
+.archive-day h3 {
+  margin: 0 0 9px;
+  color: #173c53;
+  font: 400 23px/1 "Patrick Hand", "Comic Sans MS", cursive;
+}
+.archive-list { display: grid; gap: 8px; }
+.archive-bottle {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  border: 2px solid #b8ccd5;
+  border-radius: 14px 18px 13px 17px;
+  padding: 10px;
+  background: #edf4f5;
+  color: #173c53;
+  text-align: left;
+  cursor: pointer;
+}
+.archive-bottle.from-boy { background: #dfe9f3; }
+.archive-bottle:hover { transform: translateY(-1px) rotate(-.25deg); border-color: #315f7a; }
+.archive-bottle-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 26px;
+  border: 2px solid #173c53;
+  border-radius: 45% 55% 48% 52%;
+  background: #d7f0f5;
+  font-weight: 700;
+}
+.archive-bottle span:last-child { min-width: 0; }
+.archive-bottle strong, .archive-bottle small, .archive-bottle em {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.archive-bottle strong { font-size: 12px; }
+.archive-bottle small { color: #61798a; font-size: 10px; }
+.archive-bottle em {
+  margin-top: 3px;
+  color: #345b72;
+  font: 400 11px/1.25 "Mali", "Comic Sans MS", cursive;
+}
+.empty-archive {
+  border: 2px dashed #9eb7c4;
+  border-radius: 17px;
+  padding: 16px;
+  text-align: center;
+}
 .settings-block { margin-top: 20px; padding-top: 18px; border-top: 1px solid #e7e1d4; text-align: left; }
 .settings-block label { display: block; margin: 10px 0; color: var(--muted); font-size: 10px; }
 .settings-block input, .settings-block select { width: 100%; margin-top: 5px; border: 1px solid #ddd9cb; border-radius: 9px; padding: 10px; outline: none; background: #fbf8ef; color: var(--ink); }
@@ -864,6 +954,7 @@ body { background: #38566b; }
 .dock-button strong { color: #173b51; }
 .dock-button small { color: #718894; }
 .bottle-icon { color: #357a96; }
+.archive-icon { color: #315f7a; }
 .pebble-icon { color: #55788d; }
 .dock-divider { background: #cad8dd; }
 .footer-note { color: rgba(225,238,242,.85); }
