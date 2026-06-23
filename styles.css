@@ -1079,6 +1079,163 @@ body { background: #38566b; }
   border-radius: 48% 52% 46% 54% / 56% 45% 55% 44%;
 }
 
+/* Hand-lettered typography with collision-safe layout rules. */
+body, button, textarea, input, select {
+  font-family: "Mali", "Comic Sans MS", cursive;
+}
+
+.brand h1, .auth-card h1, .modal h2, .tutorial-slide h2,
+.daily-copy h2, .dock-button strong, .shop-item strong,
+.instruction-steps strong, .shore-status strong {
+  font-family: "Patrick Hand", "Comic Sans MS", cursive;
+  font-weight: 400;
+}
+
+.brand h1 {
+  font-size: clamp(38px, 4.4vw, 58px);
+  line-height: .94;
+  letter-spacing: .01em;
+}
+
+.auth-card h1, .modal h2, .tutorial-slide h2 {
+  letter-spacing: .015em;
+}
+
+.eyebrow {
+  font-family: "Mali", "Comic Sans MS", cursive;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.music-label, .reset-clock, .auth-privacy, .star-jar-button small,
+.dog-name, .empty-lake-note, .pawnd-label, .footer-note {
+  font-family: "Patrick Hand", "Comic Sans MS", cursive;
+  font-style: normal;
+  letter-spacing: .025em;
+}
+
+.primary-button, .secondary-button, .auth-tabs button {
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.topbar > *, .header-actions > *, .daily-card > *, .dock-button,
+.shore-status, .instruction-steps article, .identity-choices button,
+.shop-item, .tutorial-actions > * {
+  min-width: 0;
+}
+
+.brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 18px;
+}
+
+.brand .eyebrow, .brand h1, .daily-copy, .daily-copy h2,
+.daily-copy p, .modal h2, .modal p {
+  overflow-wrap: anywhere;
+}
+
+.header-actions {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+}
+
+.room-heading {
+  padding-right: 42px;
+}
+
+.room-heading > div:first-child {
+  min-width: 0;
+}
+
+.room-heading h2 {
+  padding-right: 0;
+  overflow-wrap: anywhere;
+}
+
+.room-wallet {
+  white-space: nowrap;
+}
+
+.daily-card {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+
+.daily-copy p {
+  line-height: 1.45;
+}
+
+.shore-status {
+  overflow: hidden;
+}
+
+.dog-card {
+  top: 18%;
+}
+
+.status-place, .shore-status > span:last-child {
+  min-width: 0;
+}
+
+.action-dock {
+  max-width: calc(100vw - 32px);
+}
+
+.dock-button > span:last-child {
+  min-width: 0;
+}
+
+.dock-button strong, .dock-button small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal {
+  max-height: calc(100dvh - 28px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.modal-close {
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--doodle-ink);
+  border-radius: 47% 53% 45% 55%;
+  background: var(--doodle-paper);
+  color: var(--doodle-ink);
+  line-height: 1;
+}
+
+.modal h2 {
+  padding-right: 38px;
+}
+
+.tutorial-card {
+  max-height: calc(100dvh - 28px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.tutorial-actions {
+  flex-wrap: wrap;
+}
+
+.instruction-steps article > div {
+  min-width: 0;
+}
+
+.shop-item {
+  overflow: hidden;
+}
+
+.shop-item strong {
+  overflow-wrap: anywhere;
+}
+
 .paw-burst {
   position: fixed;
   z-index: 50;
@@ -1097,32 +1254,39 @@ body { background: #38566b; }
 
 @media (max-width: 700px) {
   .auth-card { padding: 28px 22px; }
-  .auth-card h1 { font-size: 30px; }
+  .auth-card h1 { font-size: 35px; }
   .world { padding: 24px 16px 22px; }
-  .brand h1 { font-size: 34px; }
+  .topbar { align-items: flex-start; gap: 8px; }
+  .brand { order: -1; flex: 1 1 100%; width: 100%; padding: 0 4px 8px; }
+  .brand h1 { font-size: clamp(37px, 11vw, 48px); }
+  .topbar { flex-wrap: wrap; }
+  .music-control { order: 2; }
+  .header-actions { order: 3; margin-left: auto; }
   .music-control { min-width: 42px; }
   .music-label { display: none; }
   .identity-button #identityName { display: none; }
   .identity-button { width: 42px; height: 42px; justify-content: center; padding: 0; }
   .heart-wallet { padding: 8px; }
-  .daily-card { grid-template-columns: auto 1fr auto; margin-top: 24px; gap: 10px; }
+  .daily-card { grid-template-columns: auto minmax(0, 1fr) auto; margin-top: 18px; gap: 10px; }
+  .daily-copy h2 { font-size: 22px; line-height: 1.05; }
+  .daily-copy p { font-size: 11px; }
   .daily-card .primary-button { grid-column: 1 / -1; }
   .star-jar-button { min-width: 0; padding: 5px; }
   .star-jar-button > span:last-child { display: none; }
   .scene { height: 440px; margin: -6px -16px 0; }
-  .shore { width: 49%; height: 53%; }
+  .shore { width: 43%; height: 53%; }
   .house { transform: scale(.74); }
   .house-left { left: 5%; }
   .house-right { right: 5%; transform: scale(.74); }
-  .dog-left { left: 45%; }
-  .dog-right { right: 45%; }
-  .custom-dog { width: 132px; height: 112px; }
+  .dog-left { left: 18%; }
+  .dog-right { right: 18%; }
+  .custom-dog { width: 118px; height: 104px; }
   .shore-status-row { top: 8px; left: 8px; right: 8px; gap: 6px; }
   .shore-status { flex: 1 1 0; max-width: calc(50% - 3px); gap: 5px; padding: 6px 8px; }
   .shore-status strong { font-size: 13px; }
   .status-place { max-width: 58px; font-size: 6px; letter-spacing: .05em; }
   .shore-status > span:last-child { max-width: 68px; font-size: 7px; }
-  .bottle { --bottle-scale: .62 !important; }
+  .bottle { --bottle-scale: .54 !important; }
   .action-dock { margin-top: 6px; }
   .dock-button { justify-content: center; padding: 8px; }
   .dock-button > span:last-child { display: none; }
@@ -1134,10 +1298,54 @@ body { background: #38566b; }
   .room-edit-bar strong { width: 100%; text-align: center; }
   .instruction-steps { grid-template-columns: 1fr; }
   .instruction-steps article:last-child { grid-column: auto; }
-  .tutorial-card { min-height: 540px; padding: 28px 20px; }
-  .tutorial-scenes { min-height: 365px; }
+  .modal { width: calc(100vw - 20px); padding: 30px 20px 24px; }
+  .modal h2 { font-size: 31px; }
+  .room-heading { display: block; padding-right: 42px; }
+  .room-wallet { display: inline-flex; margin-top: 8px; }
+  .tutorial-card { min-height: 0; padding: 28px 20px 22px; }
+  .tutorial-scenes { min-height: min(365px, 56dvh); }
   .tutorial-visual { width: 210px; height: 135px; }
-  .tutorial-slide h2 { font-size: 27px; }
+  .tutorial-slide h2 { font-size: 31px; }
+}
+
+@media (max-width: 430px) {
+  .world { padding-top: 18px; }
+  .round-button, .identity-button { width: 38px; height: 38px; }
+  .heart-wallet { min-height: 38px; }
+  .header-actions { gap: 5px; }
+  .daily-card {
+    width: 100%;
+    padding: 14px 12px;
+  }
+  .daily-icon { width: 38px; height: 38px; }
+  .shore-status-row { align-items: flex-start; }
+  .shore-status {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    border-radius: 15px 19px 13px 17px;
+    padding: 6px 7px;
+    white-space: normal;
+  }
+  .status-right { direction: ltr; text-align: right; }
+  .shore-status strong { font-size: 16px; }
+  .status-place, .shore-status > span:last-child {
+    max-width: 100%;
+    font-size: 7px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .action-dock { max-width: calc(100vw - 20px); min-height: 62px; padding: 6px; }
+  .dock-button { padding: 6px; }
+  .dock-icon { flex-basis: 32px; width: 32px; height: 32px; }
+  .furniture-shop { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tutorial-overlay { padding: 8px; }
+  .tutorial-card { max-height: calc(100dvh - 16px); }
+  .tutorial-scenes { min-height: min(350px, 55dvh); }
+  .tutorial-visual { width: min(200px, 70vw); height: 120px; }
+  .tutorial-slide h2 { margin-top: 14px; font-size: 28px; }
+  .tutorial-slide p { font-size: 11px; line-height: 1.5; }
 }
 
 @media (prefers-reduced-motion: reduce) {
