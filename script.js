@@ -180,6 +180,7 @@ let pendingIdentity = "";
 let drawingChanged = false;
 let canvasTaskIndex = -1;
 let canvasReadOnly = false;
+let sendingBottle = false;
 const shoreWeather = {
   girl: { code: 0, isDay: 1 },
   boy: { code: 0, isDay: 1 },
@@ -1113,10 +1114,13 @@ function compressImage(file) {
 }
 
 $("#sendBottle").addEventListener("click", async () => {
+  if (sendingBottle) return;
   const message = $("#bottleMessage").value.trim();
   const author = $("#bottleAuthor").value.trim() || sharedState.profiles[identity].name;
   if (sentTodayBy(identity) >= 5) return showToast("You have sent all 5 bottles for today.");
   if (!message && !pendingImage) return showToast("Put a note or photo in your bottle first.");
+  sendingBottle = true;
+  $("#sendBottle").disabled = true;
   try {
     await apiAction({ type: "sendBottle", person: identity, author, message, image: pendingImage || null });
     $("#bottleMessage").value = "";
@@ -1127,6 +1131,9 @@ $("#sendBottle").addEventListener("click", async () => {
     showToast("Your bottle is drifting across. The shared room earned ♥ 1.");
   } catch (error) {
     showToast(error.message);
+  } finally {
+    sendingBottle = false;
+    renderBottles();
   }
 });
 

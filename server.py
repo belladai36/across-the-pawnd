@@ -204,6 +204,44 @@ def stamp_bottle_reset_dates(state):
             bottle["pawndDate"] = str(bottle["sentAt"])[:10]
 
 
+def bottle_signature(person, author, message, image, pawnd_day):
+    image_digest = hashlib.sha256(str(image or "").encode("utf-8")).hexdigest()
+    return (
+        person,
+        str(author or "").strip(),
+        str(message or "").strip(),
+        image_digest,
+        pawnd_day,
+    )
+
+
+def bottle_signature_from_record(bottle):
+    return bottle_signature(
+        bottle.get("person"),
+        bottle.get("author"),
+        bottle.get("message"),
+        bottle.get("image"),
+        bottle.get("pawndDate") or bottle.get("sentDate"),
+    )
+
+
+def dedupe_bottles(state):
+    """Keep one copy of exact duplicate same-day bottles."""
+    unique = []
+    seen = set()
+    changed = False
+    for bottle in state.get("bottles", []):
+        signature = bottle_signature_from_record(bottle)
+        if signature in seen:
+            changed = True
+            continue
+        seen.add(signature)
+        unique.append(bottle)
+    if changed:
+        state["bottles"] = unique
+    return changed
+
+
 def ensure_storage():
     ROOMS_DIR.mkdir(parents=True, exist_ok=True)
     if not REGISTRY_FILE.exists():
@@ -312,6 +350,7 @@ def load_state(room_code):
             if not bottle.get("sentDate") and bottle.get("sentAt"):
                 bottle["sentDate"] = str(bottle["sentAt"])[:10]
         stamp_bottle_reset_dates(state)
+        dedupe_bottles(state)
         return state
     except (json.JSONDecodeError, OSError):
         return json.loads(json.dumps(DEFAULT_STATE))
@@ -375,13 +414,14 @@ class PawndHandler(SimpleHTTPRequestHandler):
 
     def state_response(self, room_code):
         state = load_state(room_code)
+        state_changed = dedupe_bottles(state)
         reset_owner = pawnd_reset_owner(state)
         if (
             not state["journey"].get("startedOn")
             and state["profiles"][reset_owner].get("configured")
         ):
             state["journey"]["startedOn"] = pawnd_date(state)
-            save_state(room_code, state)
+            state_changed = True
         current_pawnd_date = datetime.fromisoformat(pawnd_date(state)).date()
         started_value = state["journey"].get("startedOn")
         task_index = 0
@@ -403,6 +443,8 @@ class PawndHandler(SimpleHTTPRequestHandler):
         }
         state["roomCode"] = room_code
         state["roomName"] = load_registry()[room_code]["name"]
+        if state_changed:
+            save_state(room_code, state)
         for profile in state["profiles"].values():
             profile.pop("claimHash", None)
             profile.pop("claimHashes", None)
@@ -640,6 +682,12 @@ class PawndHandler(SimpleHTTPRequestHandler):
             if image and not image.startswith(("data:image/jpeg;", "data:image/png;", "data:image/webp;", "data:image/gif;")):
                 raise ValueError("Unsupported photo format")
             sent_date = pawnd_date(state)
+            author = str(action.get("author", "A pup"))[:30]
+            message = str(action.get("message", ""))[:600]
+            incoming_signature = bottle_signature(person, author, message, image, sent_date)
+            for bottle in state["bottles"]:
+                if bottle_signature_from_record(bottle) == incoming_signature:
+                    return
             sent_today = sum(
                 1 for bottle in state["bottles"]
                 if bottle.get("person") == person
@@ -649,9 +697,9 @@ class PawndHandler(SimpleHTTPRequestHandler):
                 raise ValueError("This pup has already sent 5 bottles today")
             state["bottles"].append({
                 "id": datetime.now().timestamp(),
-                "author": str(action.get("author", "A pup"))[:30],
+                "author": author,
                 "person": person,
-                "message": str(action.get("message", ""))[:600],
+                "message": message,
                 "image": image,
                 "sentAt": datetime.now(timezone.utc).isoformat(),
                 "sentDate": sent_date,
