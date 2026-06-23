@@ -653,7 +653,7 @@ class PawndHandler(SimpleHTTPRequestHandler):
                 "person": person,
                 "message": str(action.get("message", ""))[:600],
                 "image": image,
-                "sentAt": datetime.now().isoformat(),
+                "sentAt": datetime.now(timezone.utc).isoformat(),
                 "sentDate": sent_date,
                 "pawndDate": sent_date,
             })

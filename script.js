@@ -1141,7 +1141,7 @@ $("#lakeBottles").addEventListener("click", (event) => {
     ? `“${bottle.message}”`
     : "A little piece of the other shore.";
   const profile = sharedState.profiles[bottle.person];
-  const sentTime = new Date(bottle.sentAt);
+  const sentTime = parseStoredInstant(bottle.sentAt);
   const timeLabel = Number.isFinite(sentTime.getTime())
     ? formatProfileTime(profile, sentTime)
     : "";
@@ -1488,6 +1488,13 @@ function profileLocalDate(profile, instant = new Date()) {
     return new Date(instant.getTime() + (profile.utcOffsetMinutes || 0) * 60000);
   }
   return instant;
+}
+
+function parseStoredInstant(value) {
+  if (!value) return new Date(NaN);
+  const text = String(value);
+  const hasExplicitZone = /(?:z|[+-]\d\d:?\d\d)$/i.test(text);
+  return new Date(hasExplicitZone ? text : `${text}Z`);
 }
 
 function profileLocalHour(profile) {
