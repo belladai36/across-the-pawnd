@@ -193,6 +193,17 @@ def pawnd_date(state):
     return profile_date(state, pawnd_reset_owner(state))
 
 
+def stamp_bottle_reset_dates(state):
+    """Add shared-day stamps without removing legacy bottle history."""
+    for bottle in state.get("bottles", []):
+        if bottle.get("pawndDate"):
+            continue
+        if bottle.get("sentDate"):
+            bottle["pawndDate"] = bottle["sentDate"]
+        elif bottle.get("sentAt"):
+            bottle["pawndDate"] = str(bottle["sentAt"])[:10]
+
+
 def ensure_storage():
     ROOMS_DIR.mkdir(parents=True, exist_ok=True)
     if not REGISTRY_FILE.exists():
@@ -300,6 +311,7 @@ def load_state(room_code):
         for bottle in state["bottles"]:
             if not bottle.get("sentDate") and bottle.get("sentAt"):
                 bottle["sentDate"] = str(bottle["sentAt"])[:10]
+        stamp_bottle_reset_dates(state)
         return state
     except (json.JSONDecodeError, OSError):
         return json.loads(json.dumps(DEFAULT_STATE))
@@ -377,14 +389,17 @@ class PawndHandler(SimpleHTTPRequestHandler):
             started_on = datetime.fromisoformat(started_value).date()
             task_index = max(0, min(49, (current_pawnd_date - started_on).days))
         state["serverDate"] = pawnd_date(state)
+        state["pawndDate"] = state["serverDate"]
         state["taskIndex"] = task_index
         state["currentDates"] = {
             person: profile_date(state, person) for person in ("girl", "boy")
         }
+        shared_reset = next_profile_midnight_utc(state, reset_owner).isoformat()
         state["nextResets"] = {
-            "task": next_profile_midnight_utc(state, reset_owner).isoformat(),
-            "girlBottle": next_profile_midnight_utc(state, "girl").isoformat(),
-            "boyBottle": next_profile_midnight_utc(state, "boy").isoformat(),
+            "task": shared_reset,
+            "bottle": shared_reset,
+            "girlBottle": shared_reset,
+            "boyBottle": shared_reset,
         }
         state["roomCode"] = room_code
         state["roomName"] = load_registry()[room_code]["name"]
@@ -624,10 +639,11 @@ class PawndHandler(SimpleHTTPRequestHandler):
                 raise ValueError("Photo is too large")
             if image and not image.startswith(("data:image/jpeg;", "data:image/png;", "data:image/webp;", "data:image/gif;")):
                 raise ValueError("Unsupported photo format")
-            sent_date = profile_date(state, person)
+            sent_date = pawnd_date(state)
             sent_today = sum(
                 1 for bottle in state["bottles"]
-                if bottle.get("person") == person and bottle.get("sentDate") == sent_date
+                if bottle.get("person") == person
+                and (bottle.get("pawndDate") or bottle.get("sentDate")) == sent_date
             )
             if sent_today >= 5:
                 raise ValueError("This pup has already sent 5 bottles today")
@@ -639,6 +655,7 @@ class PawndHandler(SimpleHTTPRequestHandler):
                 "image": image,
                 "sentAt": datetime.now().isoformat(),
                 "sentDate": sent_date,
+                "pawndDate": sent_date,
             })
             state["bottles"] = state["bottles"][-100:]
             state["economy"]["hearts"] += 1

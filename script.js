@@ -158,6 +158,7 @@ let sharedState = {
   economy: { hearts: 0 },
   room: { inventory: [], placed: {} },
   serverDate: "",
+  pawndDate: "",
   currentDates: { girl: "", boy: "" },
   nextResets: { task: "", girlBottle: "", boyBottle: "" },
   settings: { dailyResetOwner: "girl" },
@@ -662,21 +663,17 @@ function escapeHtml(value) {
 }
 
 function bottlesInLake() {
-  const activeDates = new Set(Object.values(sharedState.currentDates || {}).filter(Boolean));
-  const dated = sharedState.bottles.filter((bottle) => activeDates.has(bottle.sentDate));
-  const candidates = dated.length
-    ? dated
-    : sharedState.bottles.filter((bottle) => {
-        const sent = new Date(bottle.sentAt);
-        return Number.isFinite(sent.getTime()) && Date.now() - sent.getTime() < 36 * 60 * 60 * 1000;
-      });
-  return candidates.slice(-10);
+  const sharedDate = sharedState.pawndDate || sharedState.serverDate;
+  if (!sharedDate) return [];
+  return sharedState.bottles
+    .filter((bottle) => (bottle.pawndDate || bottle.sentDate) === sharedDate)
+    .slice(-10);
 }
 
 function sentTodayBy(person) {
-  const localDate = sharedState.currentDates?.[person];
+  const localDate = sharedState.pawndDate || sharedState.serverDate;
   return sharedState.bottles.filter(
-    (bottle) => bottle.person === person && bottle.sentDate === localDate,
+    (bottle) => bottle.person === person && (bottle.pawndDate || bottle.sentDate) === localDate,
   ).length;
 }
 
@@ -732,10 +729,9 @@ function updateResetClocks() {
   const taskCountdown = formatResetCountdown(sharedState.nextResets?.task);
   $("#taskResetClock").textContent =
     `New task at 12:00 AM on ${ownerProfile.name}’s shore${taskCountdown ? ` · ${taskCountdown}` : ""}`;
-  const bottleKey = identity === "boy" ? "boyBottle" : "girlBottle";
-  const bottleCountdown = formatResetCountdown(sharedState.nextResets?.[bottleKey]);
+  const bottleCountdown = formatResetCountdown(sharedState.nextResets?.bottle || sharedState.nextResets?.task);
   $("#bottleResetClock").textContent =
-    `Your 5-bottle allowance resets at 12:00 AM${bottleCountdown ? ` · ${bottleCountdown}` : ""}`;
+    `Your 5-bottle allowance resets at 12:00 AM on ${ownerProfile.name}’s shore${bottleCountdown ? ` · ${bottleCountdown}` : ""}`;
 }
 
 function openModal(id) {
@@ -1448,8 +1444,7 @@ async function updateWeather() {
         profile.timeMode === "manual" ? "Manual time · weather resting" : "Weather resting";
       const hour = profileLocalHour(profile);
       shoreWeather[person] = { code: 0, isDay: hour >= 6 && hour < 20 ? 1 : 0 };
-      $(`.shore-${person === "girl" ? "left" : "right"}`)
-        .classList.toggle("night-shore", shoreWeather[person].isDay === 0);
+      updateShoreWeather(person, shoreWeather[person].code, shoreWeather[person].isDay);
     }
   }));
   adaptiveMusic.updateScene();
@@ -1460,8 +1455,32 @@ function paintWeather(person, data, unit) {
   shoreWeather[person] = { code: current.weather_code, isDay: current.is_day };
   const [label, icon] = weatherLabels[current.weather_code] || ["Changing skies", "◌"];
   $(`#${person}Weather`).textContent = `${icon} ${Math.round(current.temperature_2m)}${unit} · ${label}`;
-  $(`.shore-${person === "girl" ? "left" : "right"}`).classList.toggle("night-shore", current.is_day === 0);
+  updateShoreWeather(person, current.weather_code, current.is_day);
   adaptiveMusic.updateScene();
+}
+
+function weatherKind(code) {
+  if ([95, 96, 99].includes(code)) return "storm";
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "rain";
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return "snow";
+  if ([45, 48].includes(code)) return "fog";
+  if ([2, 3].includes(code)) return "cloud";
+  return "sun";
+}
+
+function updateShoreWeather(person, code, isDay) {
+  const shore = $(`.shore-${person === "girl" ? "left" : "right"}`);
+  shore.classList.remove(
+    "night-shore",
+    "weather-sun",
+    "weather-cloud",
+    "weather-rain",
+    "weather-snow",
+    "weather-fog",
+    "weather-storm",
+  );
+  shore.classList.add(`weather-${weatherKind(code)}`);
+  shore.classList.toggle("night-shore", Number(isDay) === 0);
 }
 
 function profileLocalDate(profile, instant = new Date()) {

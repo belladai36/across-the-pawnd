@@ -281,7 +281,53 @@ button { color: inherit; }
   border-radius: 0 50% 0 0;
   transform: rotate(3deg);
 }
-.shore.night-shore::after { content: ""; position: absolute; z-index: 1; inset: -40px 0 0; border-radius: inherit; background: rgba(47,57,86,.43); pointer-events: none; }
+.shore::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: -40px 0 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: .78;
+}
+.shore.weather-sun::after {
+  background:
+    radial-gradient(circle at 64% 20%, rgba(245,236,173,.42) 0 18px, transparent 19px),
+    radial-gradient(circle at 64% 20%, rgba(245,236,173,.18) 0 54px, transparent 55px);
+}
+.shore.weather-cloud::after {
+  background:
+    radial-gradient(ellipse at 37% 26%, rgba(226,239,244,.42) 0 26px, transparent 27px),
+    radial-gradient(ellipse at 58% 20%, rgba(226,239,244,.32) 0 22px, transparent 23px);
+}
+.shore.weather-rain::after {
+  background:
+    repeating-linear-gradient(112deg, transparent 0 13px, rgba(188,218,232,.8) 14px 17px, transparent 18px 32px),
+    linear-gradient(rgba(37,72,92,.14), rgba(37,72,92,.3));
+}
+.shore.weather-snow::after {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(247,251,252,.9) 0 2px, transparent 3px),
+    radial-gradient(circle at 48% 16%, rgba(247,251,252,.8) 0 2px, transparent 3px),
+    radial-gradient(circle at 73% 42%, rgba(247,251,252,.8) 0 2px, transparent 3px),
+    radial-gradient(circle at 58% 67%, rgba(247,251,252,.7) 0 2px, transparent 3px);
+  background-size: 86px 96px;
+}
+.shore.weather-fog::after {
+  background:
+    repeating-linear-gradient(178deg, transparent 0 18px, rgba(223,237,241,.44) 19px 29px, transparent 30px 51px);
+  filter: blur(1px);
+}
+.shore.weather-storm::after {
+  background:
+    linear-gradient(115deg, transparent 0 52%, rgba(244,238,166,.8) 53% 55%, transparent 56%),
+    repeating-linear-gradient(112deg, transparent 0 10px, rgba(179,210,226,.9) 11px 15px, transparent 16px 28px),
+    rgba(24,45,63,.34);
+}
+.shore.night-shore::after {
+  background-color: rgba(47,57,86,.38);
+  background-blend-mode: multiply;
+}
 .shore.night-shore .dog-card, .shore.night-shore .house, .shore.night-shore .flowers { filter: brightness(.72) saturate(.82); }
 
 .shore-right {
