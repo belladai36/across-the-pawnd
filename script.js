@@ -1359,7 +1359,10 @@ $("#furnitureShop").addEventListener("click", async (event) => {
   }
 });
 
-async function saveFurniturePlacement(item, x, y, scale, z) {
+async function saveFurniturePlacement(item, x, y, scale, z, { keepSelected = true } = {}) {
+  if (!keepSelected && selectedFurniture === item) {
+    selectedFurniture = "";
+  }
   try {
     await apiAction({ type: "placeFurniture", item, x, y, scale, z });
     showToast("The room changed for both of you.");
@@ -1385,7 +1388,9 @@ $("#tinyRoom").addEventListener("click", async (event) => {
   }
   if (!selectedFurniture || sharedState.room.placed[selectedFurniture]) return;
   const point = roomCoordinates(event);
-  await saveFurniturePlacement(selectedFurniture, point.x, point.y, 1, Date.now() % 900 + 10);
+  await saveFurniturePlacement(selectedFurniture, point.x, point.y, 1, Date.now() % 900 + 10, {
+    keepSelected: false,
+  });
 });
 
 $("#tinyRoom").addEventListener("pointerdown", (event) => {
@@ -1458,8 +1463,10 @@ $("#frontFurniture").addEventListener("click", () => {
 
 $("#storeFurniture").addEventListener("click", async () => {
   if (!selectedFurniture) return;
+  const item = selectedFurniture;
+  selectedFurniture = "";
   try {
-    await apiAction({ type: "removeFurniture", item: selectedFurniture });
+    await apiAction({ type: "removeFurniture", item });
     showToast("The furniture is back in storage.");
   } catch (error) {
     showToast(error.message);
