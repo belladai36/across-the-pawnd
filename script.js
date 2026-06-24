@@ -147,6 +147,11 @@ const furniture = [
   { id: "projector", name: "Star Projector", icon: "🌌", cost: 10, zone: "floor" },
 ];
 
+const furnitureScaleLimits = {
+  min: 0.55,
+  fallbackMax: 1.8,
+};
+
 const today = new Date();
 let sharedState = {
   journey: { completed: [], notes: {}, startedOn: "" },
@@ -676,10 +681,11 @@ function renderRoom() {
   $("#placedFurniture").innerHTML = Object.entries(placed).map(([itemId, placement]) => {
     const item = furniture.find((candidate) => candidate.id === itemId);
     if (!item || typeof placement !== "object") return "";
+    const safeScale = clampFurnitureScale(placement.scale || 1, itemId);
     return `<button class="room-object ${item.zone === "wall" ? "wall-object" : "floor-object"} ${selectedFurniture === item.id ? "selected" : ""}"
       data-room-item="${item.id}"
       aria-label="${escapeHtml(item.name)} at ${Math.round(placement.x)} percent, ${Math.round(placement.y)} percent"
-      style="left:${placement.x}%;top:${placement.y}%;--object-scale:${placement.scale || 1};z-index:${placement.z || 1}">
+      style="left:${placement.x}%;top:${placement.y}%;--object-scale:${safeScale};z-index:${placement.z || 1}">
       ${item.icon}
     </button>`;
   }).join("");
@@ -1403,7 +1409,7 @@ async function saveFurniturePlacement(item, x, y, scale, z, { keepSelected = tru
     selectedFurniture = "";
   }
   try {
-    await apiAction({ type: "placeFurniture", item, x, y, scale, z });
+    await apiAction({ type: "placeFurniture", item, x, y, scale: clampFurnitureScale(scale, item), z });
     showToast("The room changed for both of you.");
   } catch (error) {
     showToast(error.message);
@@ -1416,6 +1422,26 @@ function roomCoordinates(event) {
     x: Math.max(3, Math.min(97, ((event.clientX - room.left) / room.width) * 100)),
     y: Math.max(5, Math.min(95, ((event.clientY - room.top) / room.height) * 100)),
   };
+}
+
+function furnitureMaxScale(itemId = selectedFurniture) {
+  const room = $("#tinyRoom");
+  const roomBox = room?.getBoundingClientRect();
+  if (!roomBox?.width || !roomBox?.height) return furnitureScaleLimits.fallbackMax;
+
+  const object = itemId ? room.querySelector(`[data-room-item="${CSS.escape(itemId)}"]`) : null;
+  const currentScale = Number(sharedState.room.placed?.[itemId]?.scale) || 1;
+  const objectBox = object?.getBoundingClientRect();
+  const baseWidth = objectBox?.width ? objectBox.width / currentScale : (window.innerWidth <= 640 ? 50 : 64);
+  const baseHeight = objectBox?.height ? objectBox.height / currentScale : (window.innerWidth <= 640 ? 50 : 64);
+  const maxByRoom = Math.min((roomBox.width * 0.5) / baseWidth, (roomBox.height * 0.5) / baseHeight);
+
+  return Math.max(furnitureScaleLimits.min, Math.min(furnitureScaleLimits.fallbackMax, maxByRoom));
+}
+
+function clampFurnitureScale(scale, itemId = selectedFurniture) {
+  const numericScale = Number(scale) || 1;
+  return Math.max(furnitureScaleLimits.min, Math.min(furnitureMaxScale(itemId), numericScale));
 }
 
 $("#tinyRoom").addEventListener("click", async (event) => {
@@ -1476,11 +1502,12 @@ async function updateSelectedFurniture(changes) {
   if (!selectedFurniture) return;
   const current = sharedState.room.placed[selectedFurniture];
   if (!current) return;
+  const nextScale = changes.scale ?? current.scale ?? 1;
   await saveFurniturePlacement(
     selectedFurniture,
     current.x,
     current.y,
-    changes.scale ?? current.scale ?? 1,
+    clampFurnitureScale(nextScale),
     changes.z ?? current.z ?? 1,
   );
 }
@@ -1492,7 +1519,7 @@ $("#shrinkFurniture").addEventListener("click", () => {
 
 $("#growFurniture").addEventListener("click", () => {
   const current = sharedState.room.placed[selectedFurniture];
-  if (current) updateSelectedFurniture({ scale: Math.min(1.8, (current.scale || 1) + 0.15) });
+  if (current) updateSelectedFurniture({ scale: clampFurnitureScale((current.scale || 1) + 0.15) });
 });
 
 $("#frontFurniture").addEventListener("click", () => {
