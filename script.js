@@ -73,6 +73,7 @@ const tasks = [
 // Exactly seven real-time games. Both pups must submit before the shared reward lands.
 const togetherTasks = new Set([1, 6, 13, 26, 29, 42, 47]);
 const drawingTasks = new Set([1, 7, 12, 29, 42, 47]);
+const responseTasks = new Set([2, 6, 13, 21, 29, 32, 42]);
 const taskGuidance = {
   1: "Use the board below for your ten-line portrait. Your partner draws on their own board, and both drawings are saved with today’s task.",
   6: "This needs sound, so call each other or exchange a voice message. Type the mystery object or your guesses below afterward.",
@@ -85,6 +86,15 @@ const taskGuidance = {
   39: "Use a lamp or your phone flashlight. Type your creature’s name and power below.",
   42: "The describing pup can call or type clues without naming objects; the drawing pup uses the board below.",
   47: "Use the board below. Take turns adding lines while calling or chatting, then both confirm completion.",
+};
+const responseTaskGuidance = {
+  2: "After both pups submit, read your partner’s three statements, reply with which one you think is the fib, then your partner can mark it correct or not yet.",
+  6: "After the sound-maker submits the mystery object or clue, the other pup can reply with a guess. The sound-maker marks the guess correct or not yet.",
+  13: "Use the reply box for the final object guess after the seven yes-or-no questions. The object-holder marks it correct or not yet.",
+  21: "After your partner posts a coded message, reply with your decoded version. They can mark whether you cracked it.",
+  29: "After your partner saves their circle drawing, reply with your guess. They can mark it correct or not yet.",
+  32: "After your partner posts five emojis, reply with your translation. They can mark whether it caught the day.",
+  42: "After the drawing and original idea are revealed, reply with what you think the picture became. Your partner can mark it correct or not yet.",
 };
 const puzzleAnswers = {
   0: "Turn switch A on for a few minutes, then turn it off. Turn switch B on and go upstairs. A lit bulb belongs to B, a warm dark bulb belongs to A, and a cold dark bulb belongs to C.",
@@ -396,6 +406,10 @@ function genderSymbol(gender) {
   }[gender] || "♡";
 }
 
+function otherPerson(person) {
+  return person === "girl" ? "boy" : "girl";
+}
+
 function renderTask() {
   currentIndex = activeTaskIndex();
   currentTask = tasks[currentIndex];
@@ -407,6 +421,7 @@ function renderTask() {
   const isTogether = togetherTasks.has(currentIndex);
   const answer = puzzleAnswers[currentIndex] || noSingleAnswer;
   const drawingTask = drawingTasks.has(currentIndex);
+  const responseTask = responseTasks.has(currentIndex);
 
   $("#dayLabel").textContent = finishedAll
     ? "50 STARS COLLECTED · OUR LITTLE CONSTELLATION"
@@ -429,7 +444,9 @@ function renderTask() {
   $("#adventureModal > p").textContent = prompt;
   $("#taskCategory").textContent = category;
   $("#taskCategory").textContent = isTogether ? "Interactive · together now" : category;
-  $("#taskToolGuidance").textContent = taskGuidance[currentIndex]
+  $("#taskToolGuidance").textContent = responseTask
+    ? responseTaskGuidance[currentIndex]
+    : taskGuidance[currentIndex]
     || "Complete the activity using what you have nearby, then type a short answer, result, or memory below.";
   $("#drawingBoard").hidden = !drawingTask;
   $("#adventureAnswer").placeholder = placeholder;
@@ -456,7 +473,7 @@ function renderTask() {
   $("#partnerProgress [data-person='boy']").textContent = `${submissions.boy ? "●" : "○"} ${sharedState.profiles.boy.name}`;
   $("#partnerProgress [data-person='girl']").classList.toggle("done", Boolean(submissions.girl));
   $("#partnerProgress [data-person='boy']").classList.toggle("done", Boolean(submissions.boy));
-  renderSharedAnswers(submissions, drawingTask, mineDone);
+  renderSharedAnswers(submissions, drawingTask, mineDone, responseTask);
   $("#answerReveal").hidden = !mineDone;
   $("#correctAnswer").textContent = answer;
   $("#adventureButton").innerHTML = finishedAll
@@ -468,7 +485,7 @@ function renderTask() {
     : "Let’s do it <span>→</span>";
 }
 
-function renderSharedAnswers(submissions, drawingTask, unlocked) {
+function renderSharedAnswers(submissions, drawingTask, unlocked, responseTask = false) {
   const hasAnySubmission = Boolean(submissions.girl || submissions.boy);
   $("#sharedAnswers").hidden = !hasAnySubmission || !identity;
   if ($("#sharedAnswers").hidden) {
@@ -480,6 +497,9 @@ function renderSharedAnswers(submissions, drawingTask, unlocked) {
     const submission = submissions[person];
     const isMine = person === identity;
     const canView = Boolean(submission && (unlocked || isMine));
+    const responsePanel = canView && responseTask
+      ? renderTaskResponsePanel(person, submission, isMine)
+      : "";
     if (!submission) {
       return `<article class="shared-answer-card waiting">
         <strong>${escapeHtml(profile.name)}</strong>
@@ -502,8 +522,51 @@ function renderSharedAnswers(submissions, drawingTask, unlocked) {
       <strong>${escapeHtml(profile.name)}${isMine ? " · you" : ""}</strong>
       ${drawing}
       ${note}
+      ${responsePanel}
     </article>`;
   }).join("");
+}
+
+function renderTaskResponsePanel(targetPerson, submission, isMine) {
+  const partner = otherPerson(targetPerson);
+  const responder = isMine ? partner : identity;
+  const responderProfile = sharedState.profiles[responder];
+  const response = submission.responses?.[responder];
+
+  if (!responderProfile) return "";
+
+  if (!isMine && !response) {
+    return `<div class="task-response-box">
+      <label for="reply-${targetPerson}">Reply to ${escapeHtml(sharedState.profiles[targetPerson].name)}</label>
+      <textarea id="reply-${targetPerson}" data-task-reply="${targetPerson}" placeholder="Type your guess, answer, or reply…"></textarea>
+      <button class="secondary-button task-reply-submit" data-task-reply-submit="${targetPerson}" type="button">Send reply</button>
+    </div>`;
+  }
+
+  if (!response) {
+    return `<div class="task-response-box quiet-response">
+      <p>Waiting for ${escapeHtml(responderProfile.name)} to reply.</p>
+    </div>`;
+  }
+
+  const judgement = response.correct === true
+    ? "Correct ✓"
+    : response.correct === false
+      ? "Not yet"
+      : "Waiting for judgement";
+  const judgementButtons = isMine && response.correct == null
+    ? `<div class="judgement-buttons">
+        <button class="secondary-button" data-task-judge="${targetPerson}" data-responder="${responder}" data-correct="true" type="button">Correct ✓</button>
+        <button class="secondary-button" data-task-judge="${targetPerson}" data-responder="${responder}" data-correct="false" type="button">Not yet</button>
+      </div>`
+    : "";
+
+  return `<div class="task-response-box">
+    <span class="response-label">${escapeHtml(responderProfile.name)} replied</span>
+    <p>${escapeHtml(response.text || "No written reply.")}</p>
+    <small class="judgement ${response.correct === true ? "correct" : response.correct === false ? "incorrect" : ""}">${judgement}</small>
+    ${judgementButtons}
+  </div>`;
 }
 
 function prepareTaskCanvas(savedDrawing = "", readOnly = false) {
@@ -1164,6 +1227,7 @@ $("#completeAdventure").addEventListener("click", async () => {
   }
   const beforeCount = sharedState.journey.completed.length;
   const isTogether = togetherTasks.has(currentIndex);
+  const shouldStayOpen = responseTasks.has(currentIndex);
   try {
     await apiAction({
       type: "completeTask",
@@ -1174,7 +1238,7 @@ $("#completeAdventure").addEventListener("click", async () => {
         ? $("#taskCanvas").toDataURL("image/png")
         : null,
     });
-    closeModal($("#adventureModal"));
+    if (!shouldStayOpen) closeModal($("#adventureModal"));
     if (sharedState.journey.completed.length > beforeCount) animateStar();
     showToast(
       isTogether
@@ -1187,6 +1251,47 @@ $("#completeAdventure").addEventListener("click", async () => {
     );
   } catch (error) {
     showToast(error.message);
+  }
+});
+
+$("#sharedAnswers").addEventListener("click", async (event) => {
+  const replyButton = event.target.closest("[data-task-reply-submit]");
+  const judgeButton = event.target.closest("[data-task-judge]");
+  if (!identity) return openIdentitySetup();
+
+  if (replyButton) {
+    const target = replyButton.dataset.taskReplySubmit;
+    const textarea = $(`[data-task-reply="${CSS.escape(target)}"]`);
+    const text = textarea?.value.trim() || "";
+    if (!text) return showToast("Type a reply before sending it across.");
+    try {
+      await apiAction({
+        type: "respondToTask",
+        person: identity,
+        target,
+        index: currentIndex,
+        text,
+      });
+      showToast("Your reply crossed the water.");
+    } catch (error) {
+      showToast(error.message);
+    }
+  }
+
+  if (judgeButton) {
+    try {
+      await apiAction({
+        type: "judgeTaskResponse",
+        person: identity,
+        target: judgeButton.dataset.taskJudge,
+        responder: judgeButton.dataset.responder,
+        index: currentIndex,
+        correct: judgeButton.dataset.correct === "true",
+      });
+      showToast(judgeButton.dataset.correct === "true" ? "Marked correct ✓" : "Marked not yet.");
+    } catch (error) {
+      showToast(error.message);
+    }
   }
 });
 

@@ -639,6 +639,53 @@ button { color: inherit; }
   border-radius: 12px 15px 11px 14px;
   background: #f4f8f8;
 }
+.task-response-box {
+  margin-top: 10px;
+  border-top: 2px dashed rgba(85,123,145,.38);
+  padding-top: 9px;
+}
+.task-response-box label,
+.task-response-box .response-label {
+  display: block;
+  margin-bottom: 5px;
+  color: #315f7a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.task-response-box textarea {
+  min-height: 84px;
+  margin: 0 0 7px;
+  border-color: #8aabba;
+  background: #f8fbfb;
+  font-size: 12px;
+}
+.task-response-box .secondary-button,
+.judgement-buttons .secondary-button {
+  padding: 7px 11px;
+  border-color: #557b91;
+  background: #eef6f8;
+  color: #244c67;
+}
+.task-response-box small.judgement {
+  display: inline-flex;
+  margin-top: 7px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #eaf0f3;
+  color: #61798a;
+  font-size: 9px;
+}
+.task-response-box small.correct { background: #e0f0e7; color: #32634e; }
+.task-response-box small.incorrect { background: #f1e6e3; color: #8b5148; }
+.judgement-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.quiet-response p { font-style: italic; }
 .task-meta span { padding: 5px 9px; border-radius: 20px; background: #efeddf; color: #7c897e; font-size: 9px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .task-tool-guidance { margin: 10px 0 0 !important; border-radius: 10px; padding: 9px 11px; background: #eef0df; color: #69796e !important; font-size: 10px !important; }
 .drawing-board { margin: 13px 0; }

@@ -25,6 +25,7 @@ MAX_BODY = 4_000_000
 PASSWORD_ITERATIONS = 310_000
 ROOM_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{2,31}$")
 INTERACTIVE_TASKS = {1, 6, 13, 26, 29, 42, 47}
+INTERACTIVE_RESPONSE_TASKS = {2, 6, 13, 21, 29, 32, 42}
 
 DEFAULT_STATE = {
     "journey": {"completed": [], "notes": {}, "startedOn": ""},
@@ -647,8 +648,8 @@ class PawndHandler(SimpleHTTPRequestHandler):
             if person in day:
                 return
             day[person] = {
-                "note": str(action.get("note", ""))[:500],
-                "submittedAt": datetime.now().isoformat(),
+                "note": str(action.get("note", "")),
+                "submittedAt": datetime.now(timezone.utc).isoformat(),
             }
             drawing = action.get("drawing")
             if drawing:
@@ -672,6 +673,67 @@ class PawndHandler(SimpleHTTPRequestHandler):
                 })
                 if interactive:
                     state["economy"]["hearts"] += 2
+        elif kind == "respondToTask":
+            person = action.get("person")
+            target = action.get("target")
+            index = action.get("index")
+            if person not in ("girl", "boy") or target not in ("girl", "boy") or person == target or not isinstance(index, int):
+                raise ValueError("Invalid task reply")
+            if index not in INTERACTIVE_RESPONSE_TASKS:
+                raise ValueError("This task does not need a reply")
+            journey = state["journey"]
+            if not journey.get("startedOn"):
+                raise ValueError("Start today’s task before replying")
+            current_index = max(
+                0,
+                min(
+                    49,
+                    (
+                        datetime.fromisoformat(pawnd_date(state)).date()
+                        - datetime.fromisoformat(journey["startedOn"]).date()
+                    ).days,
+                ),
+            )
+            if index != current_index:
+                raise ValueError("That daily task has already closed")
+            day = journey["notes"].setdefault(str(index), {})
+            if person not in day:
+                raise ValueError("Send your own answer before replying")
+            if target not in day:
+                raise ValueError("Your partner’s answer is not here yet")
+            responses = day[target].setdefault("responses", {})
+            if person in responses:
+                raise ValueError("You already replied to this answer")
+            responses[person] = {
+                "text": str(action.get("text", "")),
+                "submittedAt": datetime.now(timezone.utc).isoformat(),
+                "correct": None,
+            }
+        elif kind == "judgeTaskResponse":
+            person = action.get("person")
+            target = action.get("target")
+            responder = action.get("responder")
+            index = action.get("index")
+            correct = action.get("correct")
+            if (
+                person not in ("girl", "boy")
+                or target not in ("girl", "boy")
+                or responder not in ("girl", "boy")
+                or person != target
+                or responder == target
+                or not isinstance(index, int)
+                or not isinstance(correct, bool)
+            ):
+                raise ValueError("Invalid judgement")
+            if index not in INTERACTIVE_RESPONSE_TASKS:
+                raise ValueError("This task does not need judgement")
+            journey = state["journey"]
+            day = journey["notes"].get(str(index), {})
+            response = day.get(target, {}).get("responses", {}).get(responder)
+            if not response:
+                raise ValueError("There is no reply to judge yet")
+            response["correct"] = correct
+            response["judgedAt"] = datetime.now(timezone.utc).isoformat()
         elif kind == "sendBottle":
             person = action.get("person")
             if person not in ("girl", "boy"):
