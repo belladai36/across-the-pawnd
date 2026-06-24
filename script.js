@@ -1434,7 +1434,7 @@ function furnitureMaxScale(itemId = selectedFurniture) {
   const objectBox = object?.getBoundingClientRect();
   const baseWidth = objectBox?.width ? objectBox.width / currentScale : (window.innerWidth <= 640 ? 50 : 64);
   const baseHeight = objectBox?.height ? objectBox.height / currentScale : (window.innerWidth <= 640 ? 50 : 64);
-  const maxByRoom = Math.min((roomBox.width * 0.5) / baseWidth, (roomBox.height * 0.5) / baseHeight);
+  const maxByRoom = Math.min(roomBox.width / baseWidth, roomBox.height / baseHeight);
 
   return Math.max(furnitureScaleLimits.min, Math.min(furnitureScaleLimits.fallbackMax, maxByRoom));
 }
@@ -1514,7 +1514,7 @@ async function updateSelectedFurniture(changes) {
 
 $("#shrinkFurniture").addEventListener("click", () => {
   const current = sharedState.room.placed[selectedFurniture];
-  if (current) updateSelectedFurniture({ scale: Math.max(0.55, (current.scale || 1) - 0.15) });
+  if (current) updateSelectedFurniture({ scale: Math.max(furnitureScaleLimits.min, (current.scale || 1) - 0.15) });
 });
 
 $("#growFurniture").addEventListener("click", () => {
