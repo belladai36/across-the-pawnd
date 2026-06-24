@@ -361,7 +361,7 @@ async function syncState({ quiet = false } = {}) {
     }
     sharedState = nextState;
     lastBottleId = newestBottle?.id || null;
-    renderAll();
+    renderAll({ preserveTaskDrafts: true });
     return true;
   } catch {
     if (!quiet) showToast("The Pawnd is offline. Trying again soon.");
@@ -377,9 +377,43 @@ function taskSubmissions(index) {
   return sharedState.journey.notes[String(index)] || {};
 }
 
-function renderAll() {
+function captureTaskDrafts() {
+  const modal = $("#adventureModal");
+  if (!modal?.open) return null;
+  const active = document.activeElement;
+  const replies = {};
+  $$("[data-task-reply]").forEach((textarea) => {
+    replies[textarea.dataset.taskReply] = textarea.value;
+  });
+  return {
+    answer: $("#adventureAnswer")?.value || "",
+    replies,
+    activeReply: active?.dataset?.taskReply || "",
+    activeAnswer: active?.id === "adventureAnswer",
+  };
+}
+
+function restoreTaskDrafts(drafts) {
+  if (!drafts || !$("#adventureModal")?.open) return;
+  const answer = $("#adventureAnswer");
+  if (answer && !answer.disabled) {
+    answer.value = drafts.answer;
+    if (drafts.activeAnswer) answer.focus({ preventScroll: true });
+  }
+  Object.entries(drafts.replies || {}).forEach(([target, value]) => {
+    const textarea = $(`[data-task-reply="${CSS.escape(target)}"]`);
+    if (textarea) textarea.value = value;
+  });
+  if (drafts.activeReply) {
+    $(`[data-task-reply="${CSS.escape(drafts.activeReply)}"]`)?.focus({ preventScroll: true });
+  }
+}
+
+function renderAll({ preserveTaskDrafts = false } = {}) {
+  const drafts = preserveTaskDrafts ? captureTaskDrafts() : null;
   renderIdentity();
   renderTask();
+  restoreTaskDrafts(drafts);
   renderStars();
   renderProfiles();
   renderRoom();
