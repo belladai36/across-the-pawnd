@@ -67,6 +67,10 @@ and its own state file under `.pawnd-data/rooms/`.
 For larger public usage, the room files and photo data should eventually move
 to a managed database and object storage.
 
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
+
 ## Replacing the pups
 
 The temporary pups are inside these two elements in `index.html`:
